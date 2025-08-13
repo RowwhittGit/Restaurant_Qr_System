@@ -1,9 +1,14 @@
-import React from 'react'
+import { Route, Routes } from 'react-router-dom'
+import Home from './pages/Home'
+import More from './pages/More'
 
 function App() {
   return (
-    <div className='bg-blue-400'>
-      hello world
+    <div>
+      <Routes>
+        <Route path='/' element={<Home />} />
+        <Route path='/more' element={<More />} />
+      </Routes>
     </div>
   )
 }
