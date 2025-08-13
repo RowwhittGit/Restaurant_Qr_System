@@ -1,60 +1,178 @@
-const prisma = require("../config/db");
+import prisma from '../config/db.js';
 
-// CREATE Menu Item
-exports.createMenuItem = async (req, res, next) => {
+// Get all menu items
+const getAllMenus = async (req, res) => {
   try {
-    const { name, description, price } = req.body;
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
-
-    const menuItem = await prisma.menu.create({
-      data: { name, description, price: parseFloat(price), imageUrl }
+    const menus = await prisma.menu.findMany({
+      orderBy: {
+        createdAt: 'desc'
+      }
     });
-
-    res.status(201).json(menuItem);
+    res.status(200).json({
+      success: true,
+      data: menus,
+      message: 'Menu items fetched successfully'
+    });
   } catch (error) {
-    next(error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching menu items',
+      error: error.message
+    });
   }
 };
 
-// GET All Menu Items
-exports.getAllMenuItems = async (req, res, next) => {
-  try {
-    const menu = await prisma.menu.findMany();
-    res.json(menu);
-  } catch (error) {
-    next(error);
-  }
-};
 
-// UPDATE Menu Item
-exports.updateMenuItem = async (req, res, next) => {
+// Create new menu item
+const createMenu = async (req, res) => {
   try {
-    const { name, description, price } = req.body;
-    const updateData = { name, description, price: parseFloat(price) };
+    const { name, price, image } = req.body;
 
-    if (req.file) {
-      updateData.imageUrl = `/uploads/${req.file.filename}`;
+    if (!name || !price) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name and price are required fields'
+      });
     }
 
+    const menu = await prisma.menu.create({
+      data: {
+        name,
+        price: parseFloat(price),
+        image: image || null
+      }
+    });
+
+    res.status(201).json({
+      success: true,
+      message: `${name} added successfully`,
+      data: menu
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error creating menu item',
+      error: error.message
+    });
+  }
+};
+
+// Get single menu item by ID
+const getMenuById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const menu = await prisma.menu.findUnique({
+      where: {
+        id: parseInt(id)
+      }
+    });
+
+    if (!menu) {
+      return res.status(404).json({
+        success: false,
+        message: 'Menu item not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: menu
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching menu item',
+      error: error.message
+    });
+  }
+};
+
+// Update menu item
+const updateMenu = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, price, image } = req.body;
+
+    const existingMenu = await prisma.menu.findUnique({
+      where: {
+        id: parseInt(id)
+      }
+    });
+
+    if (!existingMenu) {
+      return res.status(404).json({
+        success: false,
+        message: 'Menu item not found'
+      });
+    }
+
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (price !== undefined) updateData.price = parseFloat(price);
+    if (image !== undefined) updateData.image = image;
+
     const updatedMenu = await prisma.menu.update({
-      where: { id: parseInt(req.params.id) },
+      where: {
+        id: parseInt(id)
+      },
       data: updateData
     });
 
-    res.json(updatedMenu);
+    res.status(200).json({
+      success: true,
+      message: 'Menu item updated successfully',
+      data: updatedMenu
+    });
   } catch (error) {
-    next(error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating menu item',
+      error: error.message
+    });
   }
 };
 
-// DELETE Menu Item
-exports.deleteMenuItem = async (req, res, next) => {
+// Delete menu item
+const deleteMenu = async (req, res) => {
   try {
-    await prisma.menu.delete({
-      where: { id: parseInt(req.params.id) }
+    const { id } = req.params;
+
+    const existingMenu = await prisma.menu.findUnique({
+      where: {
+        id: parseInt(id)
+      }
     });
-    res.json({ message: "Menu item deleted" });
+
+    if (!existingMenu) {
+      return res.status(404).json({
+        success: false,
+        message: 'Menu item not found'
+      });
+    }
+
+    await prisma.menu.delete({
+      where: {
+        id: parseInt(id)
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Menu item deleted successfully'
+    });
   } catch (error) {
-    next(error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting menu item',
+      error: error.message
+    });
   }
+};
+
+export {
+  getAllMenus,
+  getMenuById,
+  createMenu,
+  updateMenu,
+  deleteMenu
 };

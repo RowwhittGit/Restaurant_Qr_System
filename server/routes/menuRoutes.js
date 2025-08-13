@@ -1,33 +1,28 @@
-import express from "express";
-import multer from "multer";
-
-const express = require("express");
-const multer = require("multer");
-const path = require("path");
-const {
-  createMenuItem,
-  getAllMenuItems,
-  updateMenuItem,
-  deleteMenuItem
-} = require("../controllers/menuController");
-
+import express from 'express';
 const router = express.Router();
+import { 
+  getAllMenus, 
+  getMenuById, 
+  createMenu, 
+  updateMenu, 
+  deleteMenu 
+} from '../controllers/menuController.js';
 
-// Multer config
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "public/uploads/");
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
-});
-const upload = multer({ storage });
+// PUBLIC ROUTES (No authentication required - for customers)
+// GET /api/menu - Get all menu items (customers can view)
+router.get('/', getAllMenus);
 
-// Routes
-router.post("/", upload.single("image"), createMenuItem);
-router.get("/", getAllMenuItems);
-router.put("/:id", upload.single("image"), updateMenuItem);
-router.delete("/:id", deleteMenuItem);
+// GET /api/menu/:id - Get single menu item (customers can view)
+router.get('/:id', getMenuById);
 
-module.exports = router;
+// ADMIN ROUTES (Authentication required)
+// POST /api/menu - Create new menu item (admin only)
+router.post('/',  createMenu);
+
+// PUT /api/menu/:id - Update menu item (admin only)
+router.put('/:id', updateMenu);
+
+// DELETE /api/menu/:id - Delete menu item (admin only)
+router.delete('/:id', deleteMenu);
+
+export default router;
