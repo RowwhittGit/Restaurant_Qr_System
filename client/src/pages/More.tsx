@@ -2,6 +2,8 @@ import { useState, useEffect } from "react"
 import { Search, Heart, Home, User, MessageCircle, Plus, Menu } from "lucide-react"
 import { IoAddCircleSharp } from "react-icons/io5";
 import axios from "axios"
+import { useOrderStore } from "../stores/orderStore";
+import { useNavigate, type NavigateFunction } from "react-router-dom";
 
 interface FoodItem {
   id: number
@@ -13,25 +15,32 @@ interface FoodItem {
 
 const categories = ["All", "Pizza", "Burger", "Laphing", "Platter"]
 
+
+
 export default function More() {
   const [foodItems, setFoodItems] = useState<FoodItem[]>([])
   const [activeCategory, setActiveCategory] = useState("All")
   const [searchTerm, setSearchTerm] = useState<string>("")
   const [displayItems, setDisplayItems] = useState<FoodItem[]>([])
-
+  
+  //zustand stores for placing orders
+  const { orders, increaseQuantity, decreaseQuantity, removeFromOrder, placeOrder, addToOrder } = useOrderStore()
+  
   useEffect(() => {
     const fetchFoodItems = async () => {
       try {
         const response = await axios.get("https://dummyjson.com/c/b5be-09e6-4823-bba4")
         setFoodItems(response.data)
         setDisplayItems(response.data)
+        console.log(response.data);
+        
       } catch (error) {
         console.error("Error fetching food items:", error)
       }
     }
     fetchFoodItems()
   }, [])
-
+  
   useEffect(() => {
     let filtered: FoodItem[] = []
     if (searchTerm.trim() !== "") {
@@ -49,6 +58,11 @@ export default function More() {
     }
     setDisplayItems(filtered)
   }, [foodItems, searchTerm, activeCategory])
+  
+  
+  const navigate: NavigateFunction = useNavigate();
+
+
 
   return (
     <div className="min-h-screen bg-gray-50 max-w-sm mx-auto relative">
@@ -117,7 +131,7 @@ export default function More() {
 
                   <div className="flex items-center justify-start">
                     <h1 className="">Rs. {item.price}</h1>
-                    <button className="text-red-500 ml-8 cursor-pointer">
+                    <button className="text-red-500 ml-8 cursor-pointer" onClick={() => addToOrder(item)} >
                       <IoAddCircleSharp className="text-red-500 text-5xl" />
                     </button>
                   </div>
@@ -142,7 +156,7 @@ export default function More() {
           <button className="text-white hover:bg-red-600 p-2 rounded">
             <MessageCircle className="h-6 w-6" />
           </button>
-          <button className="text-white hover:bg-red-600 p-2 rounded">
+          <button className="text-white hover:bg-red-600 p-2 rounded" onClick={() => navigate("/orders")}>
             <Heart className="h-6 w-6" />
           </button>
         </div>
