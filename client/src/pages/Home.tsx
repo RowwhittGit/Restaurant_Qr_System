@@ -14,7 +14,7 @@ function Home() {
   useEffect(() => {
     const getMenu = async () => {
       try {
-        const response = await axios.get<{data: MenuItem[]}>('http://localhost:3000/api/menu/');
+        const response = await axios.get<{data: MenuItem[]}>('https://dummyjson.com/c/b5be-09e6-4823-bba4');
         setMenu(response.data.data);
         console.log('Menu fetched successfully:', response.data);
       } catch (error) {
