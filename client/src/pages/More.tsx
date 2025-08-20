@@ -4,6 +4,7 @@ import { IoAddCircleSharp } from "react-icons/io5";
 import axios from "axios"
 import { useOrderStore } from "../stores/orderStore";
 import { useNavigate, type NavigateFunction } from "react-router-dom";
+import Toast, { useToast } from "../components/Toast";
 
 interface FoodItem {
   id: number
@@ -15,16 +16,15 @@ interface FoodItem {
 
 const categories = ["All", "Pizza", "Burger", "Laphing", "Platter"]
 
-
-
 export default function More() {
   const [foodItems, setFoodItems] = useState<FoodItem[]>([])
   const [activeCategory, setActiveCategory] = useState("All")
   const [searchTerm, setSearchTerm] = useState<string>("")
   const [displayItems, setDisplayItems] = useState<FoodItem[]>([])
   
-  //zustand stores for placing orders
-  const { orders, increaseQuantity, decreaseQuantity, removeFromOrder, placeOrder, addToOrder } = useOrderStore()
+  // Zustand stores for placing orders
+  const { addToOrder } = useOrderStore();
+  const { showToast } = useToast(); 
   
   useEffect(() => {
     const fetchFoodItems = async () => {
@@ -36,6 +36,7 @@ export default function More() {
         
       } catch (error) {
         console.error("Error fetching food items:", error)
+        showToast("Failed to load food items", { type: "error" });
       }
     }
     fetchFoodItems()
@@ -59,13 +60,42 @@ export default function More() {
     setDisplayItems(filtered)
   }, [foodItems, searchTerm, activeCategory])
   
-  
   const navigate: NavigateFunction = useNavigate();
 
-
+  // Function to add to the cart and notify
+  const addItemToCart = (item: FoodItem) => {
+    try {
+      // Add item to order using Zustand store
+      addToOrder(item);
+      
+      // Show success toast notification
+      showToast(`${item.name} added to cart!`, { 
+        type: "success",
+        toastOptions: {
+          position: "top-right",
+          autoClose: 2000,
+        }
+      });
+      
+    } catch (error) {
+      console.error("Error adding item to cart:", error);
+      
+      // Show error toast notification
+      showToast("Failed to add item to cart", { 
+        type: "error",
+        toastOptions: {
+          position: "top-right",
+          autoClose: 3000,
+        }
+      });
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 max-w-sm mx-auto relative">
+      {/* Toast Container */}
+      <Toast />
+      
       {/* Header */}
       <div className="bg-white px-4 py-6 flex items-center justify-between">
         <div className="flex-1">
@@ -131,7 +161,10 @@ export default function More() {
 
                   <div className="flex items-center justify-start">
                     <h1 className="">Rs. {item.price}</h1>
-                    <button className="text-red-500 ml-8 cursor-pointer" onClick={() => addToOrder(item)} >
+                    <button 
+                      className="text-red-500 ml-8 cursor-pointer hover:text-red-600 transition-colors" 
+                      onClick={() => addItemToCart(item)} // Pass the item as parameter
+                    >
                       <IoAddCircleSharp className="text-red-500 text-5xl" />
                     </button>
                   </div>

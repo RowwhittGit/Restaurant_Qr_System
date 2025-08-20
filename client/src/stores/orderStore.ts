@@ -25,6 +25,7 @@ interface OrderStore {
 
 
 export const useOrderStore = create<OrderStore>((set, get) => ({
+
   orders: [],
 
   // Add item to order (if exists, increase qty)
