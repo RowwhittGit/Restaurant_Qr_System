@@ -11,6 +11,7 @@ interface FoodItem {
 
 interface OrderItem extends FoodItem {
   quantity: number
+  menuId?: number // Optional menuId for backend compatibility
 }
 
 interface OrderStore {
@@ -40,7 +41,10 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
         ),
       })
     } else {
-      set({ orders: [...orders, { ...item, quantity: 1 }] })
+      set({ orders: [...orders, { 
+        ...item,
+         quantity: 1,
+         menuId: item.id }] })
     }
     console.log("order placed successfully", get().orders);
     

@@ -26,7 +26,7 @@ const getAllMenus = async (req, res) => {
 // Create new menu item
 const createMenu = async (req, res) => {
   try {
-    const { name, price, image } = req.body;
+    const { name, price, image, category } = req.body;
 
     if (!name || !price) {
       return res.status(400).json({
@@ -35,11 +35,21 @@ const createMenu = async (req, res) => {
       });
     }
 
+    // category should be an array of strings
+    let categoryArr = [];
+    if (Array.isArray(category)) {
+      categoryArr = category;
+    } else if (typeof category === 'string' && category.trim() !== '') {
+      // Accept comma-separated string as well
+      categoryArr = category.split(',').map(c => c.trim()).filter(Boolean);
+    }
+
     const menu = await prisma.menu.create({
       data: {
         name,
         price: parseFloat(price),
-        image: image || null
+        image: image || null,
+        category: categoryArr
       }
     });
 
@@ -91,7 +101,7 @@ const getMenuById = async (req, res) => {
 const updateMenu = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, price, image } = req.body;
+    const { name, price, image, category } = req.body;
 
     const existingMenu = await prisma.menu.findUnique({
       where: {
@@ -110,6 +120,15 @@ const updateMenu = async (req, res) => {
     if (name !== undefined) updateData.name = name;
     if (price !== undefined) updateData.price = parseFloat(price);
     if (image !== undefined) updateData.image = image;
+    if (category !== undefined) {
+      if (Array.isArray(category)) {
+        updateData.category = category;
+      } else if (typeof category === 'string' && category.trim() !== '') {
+        updateData.category = category.split(',').map(c => c.trim()).filter(Boolean);
+      } else {
+        updateData.category = [];
+      }
+    }
 
     const updatedMenu = await prisma.menu.update({
       where: {

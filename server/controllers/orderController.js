@@ -14,6 +14,7 @@ const ALLOWED_STATUS = new Set([
 
 export const createOrder = async (req, res) => {
   try {
+    console.log("Incoming body:", req.body);
     const { tableId, items, totalItems, totalPrice } = req.body;
 
     // Basic validation
@@ -27,32 +28,44 @@ export const createOrder = async (req, res) => {
       return res.status(400).json({ error: 'Missing or invalid required fields' });
     }
 
-    // Create order + nested items
+    // ✅ Validate that all items have menuId
+    for (const item of items) {
+      if (!item.menuId) {
+        return res.status(400).json({ 
+          error: `Item "${item.name}" is missing menuId` 
+        });
+      }
+    }
+
+    // ✅ Create order with only schema-compatible fields
     const order = await prisma.order.create({
       data: {
         tableId: parseInt(tableId),
         totalItems: parseInt(totalItems),
         totalPrice: parseFloat(totalPrice),
-        // default status is PENDING by schema
         items: {
           create: items.map((item) => ({
-            name: String(item.name),
-            price: parseFloat(item.price),
+            menuId: parseInt(item.menuId),
             quantity: parseInt(item.quantity),
+            // ✅ Only use fields that exist in OrderItem schema
+            // name and price come from the Menu relation
           })),
         },
       },
-      include: { items: true },
+      include: { 
+        items: {
+          include: {
+            menu: true  // ✅ Include menu details to get name, price, etc.
+          }
+        }
+      },
     });
 
     // Emit real-time events
-    const io = req.app.get('io'); // provided by app.set('io', io) in index.js
+    const io = req.app.get('io');
     if (io) {
-      // Notify kitchen & admin dashboards about the new order
       io.to('kitchen').emit('newOrder', order);
       io.to('admin').emit('newOrder', order);
-
-      // Notify the table (confirmation)
       io.to(`table_${order.tableId}`).emit('orderPlaced', order);
     }
 
@@ -70,7 +83,13 @@ export const getOrder = async (req, res) => {
 
     const order = await prisma.order.findUnique({
       where: { id: parseInt(id) },
-      include: { items: true },
+      include: { 
+        items: {
+          include: {
+            menu: true  // ✅ Include menu details
+          }
+        }
+      },
     });
 
     if (!order) {
@@ -97,7 +116,13 @@ export const updateOrderStatus = async (req, res) => {
     const updatedOrder = await prisma.order.update({
       where: { id: parseInt(id) },
       data: { status },
-      include: { items: true },
+      include: { 
+        items: {
+          include: {
+            menu: true  // ✅ Include menu details
+          }
+        }
+      },
     });
 
     // Emit to relevant rooms
@@ -125,7 +150,13 @@ export const getTableOrders = async (req, res) => {
         tableId: parseInt(tableId),
         status: { not: 'PAID' }, // Only active orders
       },
-      include: { items: true },
+      include: { 
+        items: {
+          include: {
+            menu: true  // ✅ Include menu details
+          }
+        }
+      },
       orderBy: { createdAt: 'desc' },
     });
 
