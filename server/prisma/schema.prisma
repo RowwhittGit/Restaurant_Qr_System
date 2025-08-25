@@ -7,12 +7,6 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model User {
-  id    Int     @id @default(autoincrement())
-  name  String
-  email String  @unique
-}
-
 model Menu {
   id          Int      @id @default(autoincrement())
   name        String
@@ -48,7 +42,8 @@ enum OrderStatus {
   CONFIRMED
   PREPARING
   READY
-  COMPLETED
+  SERVED
   CANCELLED
+  PAID
 }
 //this is a new branch comment
