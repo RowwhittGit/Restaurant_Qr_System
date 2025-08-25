@@ -21,3 +21,33 @@ model Menu {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model Order {
+  id          Int         @id @default(autoincrement())
+  tableId     Int
+  items       OrderItem[]
+  totalItems  Int
+  totalPrice  Float
+  status      OrderStatus @default(PENDING)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model OrderItem {
+  id          Int      @id @default(autoincrement())
+  orderId     Int
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  name        String
+  price       Float
+  quantity    Int
+  createdAt   DateTime @default(now())
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+}
