@@ -7,6 +7,7 @@ import AdminPage from './pages/AdminPage'
 import KitchenPage from './pages/KitchenPage'
 import AdminMenu from './pages/AdminMenu'
 import AdminMenuCreate from './pages/CreateMenu'
+import AdminMenuUpdate from './pages/AdminEditMenu'
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/admin/menu" element={<AdminMenu />} />
         <Route path="/admin/menu/create" element={<AdminMenuCreate />} />
+        <Route path="/admin/menu/update/:id" element={<AdminMenuUpdate />} />
 
 
       </Routes>

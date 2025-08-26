@@ -78,7 +78,8 @@ export default function AdminMenu() {
       console.log("Toggling visibility for item:", item);
       
       // Make PATCH request to toggle availability
-      const response = await axios.patch(`http://localhost:3000/api/menu/${item.id}/availability/`);
+      //mock api endpoint
+       await axios.patch(`http://localhost:3000/api/menu/${item.id}/availability/`);
       
       // Update local state with the toggled availability
       setFoodItems(prevItems => 
@@ -227,7 +228,7 @@ export default function AdminMenu() {
             displayItems.map((item) => (
               <div key={item.id} className="rounded-2xl overflow-hidden shadow-sm bg-white">
                 {/* Image with blur overlay for unavailable items */}
-                <div className="aspect-square relative overflow-hidden">
+                <div className="aspect-square relative overflow-hidden" onClick={() => navigate(`/admin/menu/update/${item.id}`)}>
                   <img 
                     src={item.image || "/placeholder.svg"} 
                     alt={item.name} 
