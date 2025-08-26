@@ -98,7 +98,7 @@ const AdminPage: React.FC = () => {
   const fetchAllOrders = async () => {
     try {
       // You'll need to create this endpoint to get all orders
-      const response = await axios.get("http://localhost:3000/api/orders/all");
+      const response = await axios.get("http://localhost:3000/api/orders/");
       setOrders(response.data);
       updateStats(response.data);
       setLoading(false);

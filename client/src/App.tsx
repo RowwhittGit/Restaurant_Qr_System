@@ -5,6 +5,7 @@ import HomePage from './pages/Home'
 import CustomerOrder from './pages/CustomerOrderspage'
 import AdminPage from './pages/AdminPage'
 import KitchenPage from './pages/KitchenPage'
+import AdminMenu from './pages/AdminMenu'
 
 function App() {
   return (
@@ -15,6 +16,8 @@ function App() {
         <Route path='/orders' element={<CustomerOrder />} />
         <Route path="/kitchen" element={<KitchenPage />} />
         <Route path="/admin" element={<AdminPage />} />
+        <Route path="/admin/menu" element={<AdminMenu />} />
+
       </Routes>
     </div>
   )

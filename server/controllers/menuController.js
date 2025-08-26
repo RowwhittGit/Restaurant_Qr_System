@@ -21,7 +21,7 @@ const getAllMenus = async (req, res) => {
     });
   }
 };
-
+//TODO: Add pagination and search functionality
 
 // Create new menu item
 const createMenu = async (req, res) => {
@@ -66,6 +66,7 @@ const createMenu = async (req, res) => {
     });
   }
 };
+//Done
 
 // Get single menu item by ID
 const getMenuById = async (req, res) => {

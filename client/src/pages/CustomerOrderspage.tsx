@@ -48,7 +48,7 @@ export default function CustomerOrder() {
       clearOrders();
 
       // Redirect to menu or "track order" page
-      setTimeout(() => navigate("/more"), 2000);
+      setTimeout(() => navigate("/"), 2000);
     });
 
     return () => {
@@ -111,7 +111,7 @@ const handlePlaceOrder = async () => {
       <div className="bg-white px-4 py-6 shadow-sm flex gap-5 items-center">
         <button
           className="bg-red-500 rounded-full w-10 flex justify-center hover:bg-red-600 transition-colors"
-          onClick={() => navigate("/more")}
+          onClick={() => navigate("/")}
         >
           <IoArrowBackOutline className="h-10 w-8 text-white" />
         </button>
@@ -172,7 +172,7 @@ const handlePlaceOrder = async () => {
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg">No items in your order</p>
             <button
-              onClick={() => navigate("/more")}
+              onClick={() => navigate("/")}
               className="mt-4 bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-colors"
             >
               Start Ordering

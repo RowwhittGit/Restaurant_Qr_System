@@ -47,7 +47,7 @@ export const createOrder = async (req, res) => {
           create: items.map((item) => ({
             menuId: parseInt(item.menuId),
             quantity: parseInt(item.quantity),
-            // ✅ Only use fields that exist in OrderItem schema
+            // Only use fields that exist in OrderItem schema
             // name and price come from the Menu relation
           })),
         },
@@ -81,27 +81,39 @@ export const getOrder = async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Handle "all" separately
+    if (id === "all") {
+      const orders = await prisma.order.findMany({
+        include: {
+          items: { include: { menu: true } }
+        },
+      });
+      return res.json(orders);
+    }
+
+    const orderId = parseInt(id, 10);
+    if (isNaN(orderId)) {
+      return res.status(400).json({ error: "Invalid order ID" });
+    }
+
     const order = await prisma.order.findUnique({
-      where: { id: parseInt(id) },
+      where: { id: orderId },
       include: { 
-        items: {
-          include: {
-            menu: true  // ✅ Include menu details
-          }
-        }
+        items: { include: { menu: true } }
       },
     });
 
     if (!order) {
-      return res.status(404).json({ error: 'Order not found' });
+      return res.status(404).json({ error: "Order not found" });
     }
 
     return res.json(order);
   } catch (error) {
-    console.error('getOrder error:', error);
+    console.error("getOrder error:", error);
     return res.status(500).json({ error: error.message });
   }
 };
+
 
 // Update order status (DB-first, then emit)
 export const updateOrderStatus = async (req, res) => {

@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react"
 import { Search, Heart, Home, User, MessageCircle, Plus, Menu } from "lucide-react"
-import { IoAddCircleSharp } from "react-icons/io5";
+import {  IoTrashOutline } from "react-icons/io5";
 import axios from "axios"
-import { useOrderStore } from "../stores/orderStore";
-import { useNavigate, type NavigateFunction } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Toast, { useToast } from "../components/Toast";
+import BottomNav from "../components/BottomNav";
 
 interface FoodItem {
   id: number
@@ -16,14 +16,13 @@ interface FoodItem {
 
 const categories = ["All", "Pizza", "Burger", "Laphing", "Platter", "Momo"]
 
-export default function HomePage() {
+export default function AdminMenu() {
   const [foodItems, setFoodItems] = useState<FoodItem[]>([])
   const [activeCategory, setActiveCategory] = useState("All")
   const [searchTerm, setSearchTerm] = useState<string>("")
   const [displayItems, setDisplayItems] = useState<FoodItem[]>([])
+  const [dropdownOpen, setDropdownOpen] = useState<Boolean>(false);
   
-  // Zustand stores for placing orders
-  const { addToOrder } = useOrderStore();
   const { showToast } = useToast(); 
   
   useEffect(() => {
@@ -60,16 +59,19 @@ export default function HomePage() {
     setDisplayItems(filtered)
   }, [foodItems, searchTerm, activeCategory])
   
-  const navigate: NavigateFunction = useNavigate();
+  const navigate = useNavigate();
 
-  // Function to add to the cart and notify
-  const addItemToCart = (item: FoodItem) => {
+  // Function to delete a menu item
+  const deleteMenuItem = async (item: FoodItem) => {
     try {
-      // Add item to order using Zustand store
-      addToOrder(item);
+      // Make API call to delete the item
+      await axios.delete(`http://localhost:3000/api/menu/${item.id}`);
+      
+      // Update local state by removing the deleted item
+      setFoodItems(prevItems => prevItems.filter(i => i.id !== item.id));
       
       // Show success toast notification
-      showToast(`${item.name} added to cart!`, { 
+      showToast(`${item.name} deleted successfully!`, { 
         type: "success",
         toastOptions: {
           position: "top-right",
@@ -78,10 +80,10 @@ export default function HomePage() {
       });
       
     } catch (error) {
-      console.error("Error adding item to cart:", error);
+      console.error("Error deleting menu item:", error);
       
       // Show error toast notification
-      showToast("Failed to add item to cart", { 
+      showToast("Failed to delete menu item", { 
         type: "error",
         toastOptions: {
           position: "top-right",
@@ -100,15 +102,38 @@ export default function HomePage() {
       <div className="bg-white px-4 py-6 flex items-center justify-between">
         <div className="flex-1">
           <h1 className="text-2xl font-bold text-gray-900 font-serif">Bhatti foods</h1>
-          <p className="text-sm text-gray-600 mt-1">Order your favourite food!</p>
+          <p className="text-sm text-gray-600 mt-1">Manage your restaurant</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full overflow-hidden">
             <img src="https://t3.ftcdn.net/jpg/07/24/59/76/360_F_724597608_pmo5BsVumFcFyHJKlASG2Y2KpkkfiYUU.jpg" alt="Profile" className="w-full h-full object-cover" />
           </div>
-          <button className="bg-red-500 hover:bg-red-600 text-white rounded-lg p-2">
+          <button className="bg-red-500 hover:bg-red-600 text-white rounded-lg p-2 relative" onClick={() => setDropdownOpen(!dropdownOpen)}>
             <Menu className="h-5 w-5" />
           </button>
+          {/* Dropdown Menu */}
+          <div className={`absolute top-16 right-4 bg-white shadow-lg rounded-lg overflow-hidden transition-all duration-300 ${dropdownOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
+            <button 
+              className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 w-full text-left"
+              onClick={() => {
+                setDropdownOpen(false);
+                navigate("/add-menu-item");
+              }}
+            >
+              <Plus className="h-4 w-4" />
+              Add Menu Item
+            </button>
+            <button 
+              className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 w-full text-left"
+              onClick={() => {
+                setDropdownOpen(false);
+                navigate("/more");
+              }}
+            >
+              <Heart className="h-4 w-4" />
+              View Orders
+            </button>
+            </div>
         </div>
       </div>
 
@@ -117,7 +142,7 @@ export default function HomePage() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
           <input
-            placeholder="Search"
+            placeholder="Search menu items"
             value={searchTerm}
             className="w-full pl-10 bg-gray-100 border-0 rounded-lg h-12 px-3 focus:outline-none focus:ring-2 focus:ring-red-500"
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
@@ -159,53 +184,27 @@ export default function HomePage() {
                   <h3 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-1">{item.name}</h3>
                   <p className="text-xs text-gray-500 mb-2 capitalize">{item.category.join(", ")}</p>
 
-                  <div className="flex items-center justify-start">
-                    <h1 className="">Rs. {item.price}</h1>
+                  <div className="flex items-center justify-between">
+                    <h1 className="text-gray-900 font-medium">Rs. {item.price}</h1>
                     <button 
-                      className="text-red-500 ml-8 cursor-pointer hover:text-red-600 transition-colors" 
-                      onClick={() => addItemToCart(item)} // Pass the item as parameter
+                      className="text-red-500 cursor-pointer hover:text-red-700 transition-colors" 
+                      onClick={() => deleteMenuItem(item)}
+                      aria-label={`Delete ${item.name}`}
                     >
-                      <IoAddCircleSharp className="text-red-500 text-5xl" />
+                      <IoTrashOutline className="text-2xl" />
                     </button>
                   </div>
                 </div>
               </div>
             ))
           ) : (
-            <p className="text-center col-span-2 text-gray-500">No items found</p>
+            <p className="text-center col-span-2 text-gray-500">No menu items found</p>
           )}
         </div>
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-red-500 px-4 py-3">
-        <div className="flex items-center justify-around">
-          <button className="text-white hover:bg-red-600 p-2 rounded">
-            <Home className="h-6 w-6" />
-          </button>
-          <button className="text-white hover:bg-red-600 p-2 rounded">
-            <User className="h-6 w-6" />
-          </button>
-          <button className="text-white hover:bg-red-600 p-2 rounded">
-            <MessageCircle className="h-6 w-6" />
-          </button>
-          <button className="text-white hover:bg-red-600 p-2 rounded" onClick={() => navigate("/orders")}>
-            <Heart className="h-6 w-6" />
-          </button>
-        </div>
-      </div>
-
-      {/* Floating Action Button */}
-      <div className="fixed bottom-20 right-4">
-        <button className="bg-red-500 hover:bg-red-600 text-white rounded-full h-14 w-14 shadow-lg flex items-center justify-center">
-          <Plus className="h-6 w-6" />
-        </button>
-      </div>
-
-      {/* Debug indicator */}
-      <div className="fixed bottom-4 right-4 bg-black/20 text-white text-xs px-2 py-1 rounded pointer-events-none">
-        72 x 72
-      </div>
+      <BottomNav />
     </div>
   )
 }
