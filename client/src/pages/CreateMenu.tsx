@@ -1,7 +1,4 @@
-"use client"
-
 import type React from "react"
-
 import { useState } from "react"
 import { ArrowLeft, Plus, X } from "lucide-react"
 import axios from "axios"
@@ -37,6 +34,7 @@ export default function AdminMenuCreate() {
   })
   const [newCategory, setNewCategory] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [imagePreviewError, setImagePreviewError] = useState(false)
 
   const navigate = useNavigate()
@@ -76,6 +74,32 @@ export default function AdminMenuCreate() {
     }
   }
 
+  // 🔹 Upload image to Cloudinary
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploadingImage(true)
+    try {
+      const data = new FormData()
+      data.append("file", file)
+      data.append("upload_preset", "Restaurant1")
+
+      const res = await axios.post(
+        `https://api.cloudinary.com/v1_1/dpcux5ovk/image/upload`,
+        data
+      )
+
+      handleInputChange("image", res.data.secure_url)
+      showToast("Image uploaded successfully!", { type: "success" })
+    } catch (err) {
+      console.error("Cloudinary upload error:", err)
+      showToast("Failed to upload image", { type: "error" })
+    } finally {
+      setIsUploadingImage(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -91,7 +115,7 @@ export default function AdminMenuCreate() {
         name: formData.name,
         price: Number(formData.price),
         category: formData.category,
-        image: formData.image,
+        image: formData.image, // ✅ already uploaded to Cloudinary
       }
 
       await axios.post("http://localhost:3000/api/menu/", submitData)
@@ -104,18 +128,9 @@ export default function AdminMenuCreate() {
         },
       })
 
-      // Reset form
-      setFormData({
-        name: "",
-        price: "",
-        category: [],
-        image: "",
-      })
+      setFormData({ name: "", price: "", category: [], image: "" })
 
-      // Navigate back after a short delay
-      setTimeout(() => {
-        navigate("/admin/menu")
-      }, 1500)
+      setTimeout(() => navigate("/admin/menu"), 1500)
     } catch (error) {
       console.error("Error creating menu item:", error)
       showToast("Failed to create menu item", {
@@ -150,17 +165,17 @@ export default function AdminMenuCreate() {
       {/* Form */}
       <div className="px-4 pb-20">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Image URL and Preview */}
+          {/* Image Upload */}
           <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Image URL</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Upload Image</label>
             <input
-              type="url"
-              value={formData.image}
-              onChange={(e) => handleInputChange("image", e.target.value)}
-              placeholder="https://example.com/image.jpg"
-              className="w-full px-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-              required
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="w-full"
             />
+
+            {isUploadingImage && <p className="text-sm text-gray-500 mt-2">Uploading...</p>}
 
             {formData.image && (
               <div className="mt-4">
@@ -168,14 +183,14 @@ export default function AdminMenuCreate() {
                 <div className="aspect-square w-32 mx-auto rounded-lg overflow-hidden border border-gray-200">
                   {!imagePreviewError ? (
                     <img
-                      src={formData.image || "/placeholder.svg"}
+                      src={formData.image}
                       alt="Preview"
                       className="w-full h-full object-cover"
                       onError={() => setImagePreviewError(true)}
                     />
                   ) : (
                     <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
-                      Invalid Image URL
+                      Invalid Image
                     </div>
                   )}
                 </div>
@@ -215,7 +230,6 @@ export default function AdminMenuCreate() {
           <div className="bg-white rounded-2xl p-4 shadow-sm">
             <label className="block text-sm font-medium text-gray-700 mb-2">Categories</label>
 
-            {/* Selected Categories */}
             {formData.category.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-3">
                 {formData.category.map((cat) => (
@@ -275,7 +289,7 @@ export default function AdminMenuCreate() {
             </div>
           </div>
 
-          {/* Submit Button */}
+          {/* Submit */}
           <button
             type="submit"
             disabled={isSubmitting}

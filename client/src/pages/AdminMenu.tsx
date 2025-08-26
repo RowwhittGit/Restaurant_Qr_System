@@ -24,6 +24,7 @@ export default function AdminMenu() {
   const [displayItems, setDisplayItems] = useState<FoodItem[]>([])
   const [dropdownOpen, setDropdownOpen] = useState<Boolean>(false);
   const [loadingStates, setLoadingStates] = useState<Record<number, boolean>>({});
+  const [customerView, setCustomerView] = useState<boolean>(false);
   
   const { showToast } = useToast(); 
   
@@ -44,22 +45,28 @@ export default function AdminMenu() {
   }, [])
   
   useEffect(() => {
-    let filtered: FoodItem[] = []
-    if (searchTerm.trim() !== "") {
-      // Search across all categories
-      filtered = foodItems.filter(item =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    } else if (activeCategory !== "All") {
-      // Filter by category
-      filtered = foodItems.filter(item =>
-        item.category.map(c => c.toLowerCase()).includes(activeCategory.toLowerCase())
-      )
-    } else {
-      filtered = foodItems
+    let filtered: FoodItem[] = foodItems;
+    
+    // First, apply customerView filter if active
+    if (customerView) {
+      filtered = filtered.filter(item => item.isAvailable);
     }
-    setDisplayItems(filtered)
-  }, [foodItems, searchTerm, activeCategory])
+    
+    // Then apply search/category filters on top of customerView filter
+    if (searchTerm.trim() !== "") {
+      // Search across the already filtered items
+      filtered = filtered.filter(item =>
+        item.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    } else if (activeCategory !== "All") {
+      // Filter by category on the already filtered items
+      filtered = filtered.filter(item =>
+        item.category.map(c => c.toLowerCase()).includes(activeCategory.toLowerCase())
+      );
+    }
+    
+    setDisplayItems(filtered);
+  }, [foodItems, searchTerm, activeCategory, customerView])
   
   const navigate = useNavigate();
 
@@ -114,41 +121,68 @@ export default function AdminMenu() {
       <Toast />
       
       {/* Header */}
-      <div className="bg-white px-4 py-6 flex items-center justify-between">
+      <div className="bg-white px-4 py-6 flex items-center justify-between shadow-sm">
         <div className="flex-1">
           <h1 className="text-2xl font-bold text-gray-900 font-serif">Bhatti foods</h1>
-          <p className="text-sm text-gray-600 mt-1">Manage your restaurant</p>
+          <p className="text-sm text-gray-600 mt-1">
+            {customerView ? "Customer view - Available items only" : "Manage your restaurant"}
+          </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full overflow-hidden">
+        <div className="flex items-center gap-3 relative">
+          <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200">
             <img src="https://t3.ftcdn.net/jpg/07/24/59/76/360_F_724597608_pmo5BsVumFcFyHJKlASG2Y2KpkkfiYUU.jpg" alt="Profile" className="w-full h-full object-cover" />
           </div>
-          <button className="bg-red-500 hover:bg-red-600 text-white rounded-lg p-2 relative" onClick={() => setDropdownOpen(!dropdownOpen)}>
+          <button 
+            className="bg-red-500 hover:bg-red-600 text-white rounded-lg p-2 transition-all duration-200 hover:shadow-md active:scale-95" 
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+          >
             <Menu className="h-5 w-5" />
           </button>
+          
           {/* Dropdown Menu */}
-          <div className={`absolute top-16 right-4 bg-white shadow-lg rounded-lg overflow-hidden transition-all duration-300 ${dropdownOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
-            <button 
-              className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 w-full text-left"
-              onClick={() => {
-                setDropdownOpen(false);
-                navigate("/add-menu-item");
-              }}
-            >
-              <Plus className="h-4 w-4" />
-              Add Menu Item
-            </button>
-            <button 
-              className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 w-full text-left"
-              onClick={() => {
-                setDropdownOpen(false);
-                navigate("/more");
-              }}
-            >
-              <Heart className="h-4 w-4" />
-              View Orders
-            </button>
+          <div className={`absolute top-14 right-0 bg-white shadow-xl rounded-xl overflow-hidden z-50 min-w-[180px] border border-gray-100 transition-all duration-300 transform origin-top-right ${
+            dropdownOpen 
+              ? 'opacity-100 scale-100 translate-y-0' 
+              : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
+          }`}>
+            <div className="py-2">
+              <button 
+                className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 w-full text-left text-gray-700 hover:text-gray-900 transition-colors duration-150"
+                onClick={() => {
+                  setDropdownOpen(false);
+                  navigate("/admin/menu/create");
+                }}
+              >
+                <Plus className="h-4 w-4 text-green-500" />
+                <span className="font-medium">Create Menu</span>
+              </button>
+              
+              <button 
+                className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 w-full text-left text-gray-700 hover:text-gray-900 transition-colors duration-150"
+                onClick={() => {
+                  setDropdownOpen(false);
+                  setCustomerView(!customerView);
+                }}
+              >
+                <IoEyeOutline className="h-4 w-4 text-blue-500" />
+                <span className="font-medium">{customerView ? "Admin View" : "Customer View"}</span>
+              </button>
+              
+              <div className="border-t border-gray-100 my-1"></div>
+              
+              <button 
+                className="flex items-center gap-3 px-4 py-3 hover:bg-red-50 w-full text-left text-gray-700 hover:text-red-600 transition-colors duration-150"
+                onClick={() => {
+                  setDropdownOpen(false);
+                  // Add logout logic here
+                  console.log("Logout clicked");
+                }}
+              >
+                <Heart className="h-4 w-4 text-red-500" />
+                <span className="font-medium">Logout</span>
+              </button>
             </div>
+          </div>
         </div>
       </div>
 
@@ -192,24 +226,21 @@ export default function AdminMenu() {
           {displayItems.length > 0 ? (
             displayItems.map((item) => (
               <div key={item.id} className="rounded-2xl overflow-hidden shadow-sm bg-white">
-
-{/* TODO: ADD A SLIGHT BLUR OVERLAY ON THE IMAGE RATHER THAN THE BLACK SCREEN */}
-            <div className="aspect-square relative overflow-hidden">
-              <img 
-                src={item.image || "/placeholder.svg"} 
-                alt={item.name} 
-                className={`w-full h-full object-cover ${!item.isAvailable ? 'filter blur-sm opacity-60' : ''}`}
-              />
-              {!item.isAvailable && (
-                <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-                  <span className="text-white font-bold text-xs bg-black bg-opacity-60 px-2 py-1 rounded">
-                    Unavailable
-                  </span>
+                {/* Image with blur overlay for unavailable items */}
+                <div className="aspect-square relative overflow-hidden">
+                  <img 
+                    src={item.image || "/placeholder.svg"} 
+                    alt={item.name} 
+                    className={`w-full h-full object-cover ${!item.isAvailable ? 'filter blur-sm opacity-60' : ''}`}
+                  />
+                  {!item.isAvailable && (
+                    <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+                      <span className="text-white font-bold text-xs bg-black bg-opacity-60 px-2 py-1 rounded">
+                        Unavailable
+                      </span>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-
-
 
                 <div className="p-3">
                   <h3 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-1">{item.name}</h3>
@@ -217,30 +248,34 @@ export default function AdminMenu() {
 
                   <div className="flex items-center justify-between">
                     <h1 className="text-gray-900 font-medium">Rs. {item.price}</h1>
-                    <button 
-                      className={`p-1 rounded-full transition-colors ${
-                        item.isAvailable 
-                          ? "text-green-600 hover:bg-green-100" 
-                          : "text-gray-400 hover:bg-gray-100"
-                      }`}
-                      onClick={() => toggleMenuItemVisibility(item)}
-                      disabled={loadingStates[item.id]}
-                      aria-label={item.isAvailable ? "Hide menu item" : "Show menu item"}
-                    >
-                      {loadingStates[item.id] ? (
-                        <div className="w-5 h-5 border-t-2 border-blue-500 border-solid rounded-full animate-spin"></div>
-                      ) : item.isAvailable ? (
-                        <IoEyeOutline className="text-xl" />
-                      ) : (
-                        <IoEyeOffOutline className="text-xl" />
-                      )}
-                    </button>
+                    {!customerView && (
+                      <button 
+                        className={`p-1 rounded-full transition-colors ${
+                          item.isAvailable 
+                            ? "text-green-600 hover:bg-green-100" 
+                            : "text-gray-400 hover:bg-gray-100"
+                        }`}
+                        onClick={() => toggleMenuItemVisibility(item)}
+                        disabled={loadingStates[item.id]}
+                        aria-label={item.isAvailable ? "Hide menu item" : "Show menu item"}
+                      >
+                        {loadingStates[item.id] ? (
+                          <div className="w-5 h-5 border-t-2 border-blue-500 border-solid rounded-full animate-spin"></div>
+                        ) : item.isAvailable ? (
+                          <IoEyeOutline className="text-xl" />
+                        ) : (
+                          <IoEyeOffOutline className="text-xl" />
+                        )}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
             ))
           ) : (
-            <p className="text-center col-span-2 text-gray-500">No menu items found</p>
+            <p className="text-center col-span-2 text-gray-500">
+              {customerView ? "No available menu items found" : "No menu items found"}
+            </p>
           )}
         </div>
       </div>
