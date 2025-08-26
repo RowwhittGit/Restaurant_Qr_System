@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { Search, Heart, Plus, Menu } from "lucide-react"
-import {  IoTrashOutline } from "react-icons/io5";
+import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
 import axios from "axios"
 import { useNavigate } from "react-router-dom";
 import Toast, { useToast } from "../components/Toast";
@@ -12,6 +12,7 @@ interface FoodItem {
   name: string
   category: string[]
   price: number
+  isAvailable: boolean // Add this field
 }
 
 const categories = ["All", "Pizza", "Burger", "Laphing", "Platter", "Momo"]
@@ -22,6 +23,7 @@ export default function AdminMenu() {
   const [searchTerm, setSearchTerm] = useState<string>("")
   const [displayItems, setDisplayItems] = useState<FoodItem[]>([])
   const [dropdownOpen, setDropdownOpen] = useState<Boolean>(false);
+  const [loadingStates, setLoadingStates] = useState<Record<number, boolean>>({});
   
   const { showToast } = useToast(); 
   
@@ -61,20 +63,28 @@ export default function AdminMenu() {
   
   const navigate = useNavigate();
 
-  // Function to delete a menu item
-  const deleteMenuItem = async (item: FoodItem) => {
-
+  // Function to toggle menu item visibility
+  const toggleMenuItemVisibility = async (item: FoodItem) => {
+    setLoadingStates(prev => ({ ...prev, [item.id]: true }));
+    
     try {
-      console.log("Deleting item:", item);
+      console.log("Toggling visibility for item:", item);
       
-      // Make API call to delete the item
-      await axios.delete(`http://localhost:3000/api/menu/${item.id}`);
+      // Make PATCH request to toggle availability
+      const response = await axios.patch(`http://localhost:3000/api/menu/${item.id}/availability/`);
       
-      // Update local state by removing the deleted item
-      setFoodItems(prevItems => prevItems.filter(i => i.id !== item.id));
+      // Update local state with the toggled availability
+      setFoodItems(prevItems => 
+        prevItems.map(i => 
+          i.id === item.id 
+            ? { ...i, isAvailable: !i.isAvailable } 
+            : i
+        )
+      );
       
       // Show success toast notification
-      showToast(`${item.name} deleted successfully!`, { 
+      const newStatus = !item.isAvailable ? "shown" : "hidden";
+      showToast(`${item.name} is now ${newStatus}`, { 
         type: "success",
         toastOptions: {
           position: "top-right",
@@ -83,16 +93,18 @@ export default function AdminMenu() {
       });
       
     } catch (error) {
-      console.error("Error deleting menu item:", error);
+      console.error("Error toggling menu item visibility:", error);
       
       // Show error toast notification
-      showToast("Failed to delete menu item", { 
+      showToast("Failed to update menu item visibility", { 
         type: "error",
         toastOptions: {
           position: "top-right",
           autoClose: 3000,
         }
       });
+    } finally {
+      setLoadingStates(prev => ({ ...prev, [item.id]: false }));
     }
   }
 
@@ -180,9 +192,25 @@ export default function AdminMenu() {
           {displayItems.length > 0 ? (
             displayItems.map((item) => (
               <div key={item.id} className="rounded-2xl overflow-hidden shadow-sm bg-white">
-                <div className="aspect-square relative overflow-hidden">
-                  <img src={item.image || "/placeholder.svg"} alt={item.name} className="w-full h-full object-cover" />
+
+{/* TODO: ADD A SLIGHT BLUR OVERLAY ON THE IMAGE RATHER THAN THE BLACK SCREEN */}
+            <div className="aspect-square relative overflow-hidden">
+              <img 
+                src={item.image || "/placeholder.svg"} 
+                alt={item.name} 
+                className={`w-full h-full object-cover ${!item.isAvailable ? 'filter blur-sm opacity-60' : ''}`}
+              />
+              {!item.isAvailable && (
+                <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+                  <span className="text-white font-bold text-xs bg-black bg-opacity-60 px-2 py-1 rounded">
+                    Unavailable
+                  </span>
                 </div>
+              )}
+            </div>
+
+
+
                 <div className="p-3">
                   <h3 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-1">{item.name}</h3>
                   <p className="text-xs text-gray-500 mb-2 capitalize">{item.category.join(", ")}</p>
@@ -190,11 +218,22 @@ export default function AdminMenu() {
                   <div className="flex items-center justify-between">
                     <h1 className="text-gray-900 font-medium">Rs. {item.price}</h1>
                     <button 
-                      className="text-red-500 cursor-pointer hover:text-red-700 transition-colors" 
-                      onClick={() => deleteMenuItem(item)}
-                      aria-label={`Delete ${item.name}`}
+                      className={`p-1 rounded-full transition-colors ${
+                        item.isAvailable 
+                          ? "text-green-600 hover:bg-green-100" 
+                          : "text-gray-400 hover:bg-gray-100"
+                      }`}
+                      onClick={() => toggleMenuItemVisibility(item)}
+                      disabled={loadingStates[item.id]}
+                      aria-label={item.isAvailable ? "Hide menu item" : "Show menu item"}
                     >
-                      <IoTrashOutline className="text-2xl" />
+                      {loadingStates[item.id] ? (
+                        <div className="w-5 h-5 border-t-2 border-blue-500 border-solid rounded-full animate-spin"></div>
+                      ) : item.isAvailable ? (
+                        <IoEyeOutline className="text-xl" />
+                      ) : (
+                        <IoEyeOffOutline className="text-xl" />
+                      )}
                     </button>
                   </div>
                 </div>
