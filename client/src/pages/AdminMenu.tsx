@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Search, Heart, Home, User, MessageCircle, Plus, Menu } from "lucide-react"
+import { Search, Heart, Plus, Menu } from "lucide-react"
 import {  IoTrashOutline } from "react-icons/io5";
 import axios from "axios"
 import { useNavigate } from "react-router-dom";
@@ -28,7 +28,7 @@ export default function AdminMenu() {
   useEffect(() => {
     const fetchFoodItems = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/api/menu/")
+        const response = await axios.get("http://localhost:3000/api/menu/adminMenu")
         setFoodItems(response.data.data)
         setDisplayItems(response.data.data)
         console.log(response.data);
@@ -63,7 +63,10 @@ export default function AdminMenu() {
 
   // Function to delete a menu item
   const deleteMenuItem = async (item: FoodItem) => {
+
     try {
+      console.log("Deleting item:", item);
+      
       // Make API call to delete the item
       await axios.delete(`http://localhost:3000/api/menu/${item.id}`);
       

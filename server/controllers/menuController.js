@@ -1,7 +1,31 @@
 import prisma from '../config/db.js';
 
-// Get all menu items
+// Get all menu items for customers (only available items)
 const getAllMenus = async (req, res) => {
+  try {
+    const menus = await prisma.menu.findMany({
+      where: { isAvailable: true },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+    res.status(200).json({
+      success: true,
+      data: menus,
+      message: 'Menu items fetched successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching menu items',
+      error: error.message
+    });
+  }
+};
+//TODO: Add pagination and search functionality
+
+// Get all menu items for admin (including unavailable items)
+const getAllMenuAdmin = async (req, res) => {
   try {
     const menus = await prisma.menu.findMany({
       orderBy: {
@@ -21,7 +45,52 @@ const getAllMenus = async (req, res) => {
     });
   }
 };
-//TODO: Add pagination and search functionality
+
+
+
+// Hide or show a menu item (set isAvailable to false or true)
+const HideOrShowMenu = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const existingMenu = await prisma.menu.findUnique({
+      where: {
+        id: parseInt(id)
+      }
+    });
+
+    if (!existingMenu) {
+      return res.status(404).json({
+        success: false,
+        message: 'Menu item not found'
+      });
+    }
+
+    // Toggle the isAvailable value
+    const updatedMenu = await prisma.menu.update({
+      where: {
+        id: parseInt(id)
+      },
+      data: {
+        isAvailable: !existingMenu.isAvailable // Toggle the value
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Menu item updated successfully',
+      data: updatedMenu
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error updating menu item',
+      error: error.message
+    });
+  }
+};
+
+
 
 // Create new menu item
 const createMenu = async (req, res) => {
@@ -68,6 +137,10 @@ const createMenu = async (req, res) => {
 };
 //Done
 
+
+
+
+
 // Get single menu item by ID
 const getMenuById = async (req, res) => {
   try {
@@ -97,6 +170,10 @@ const getMenuById = async (req, res) => {
     });
   }
 };
+
+
+
+
 
 // Update menu item
 const updateMenu = async (req, res) => {
@@ -152,6 +229,10 @@ const updateMenu = async (req, res) => {
   }
 };
 
+
+
+
+
 // Delete menu item
 const deleteMenu = async (req, res) => {
   try {
@@ -159,7 +240,7 @@ const deleteMenu = async (req, res) => {
 
     const existingMenu = await prisma.menu.findUnique({
       where: {
-        id: parseInt(id)
+        id: parseInt(id),
       }
     });
 
@@ -188,11 +269,14 @@ const deleteMenu = async (req, res) => {
     });
   }
 };
+//Done
 
 export {
   getAllMenus,
   getMenuById,
   createMenu,
   updateMenu,
-  deleteMenu
+  deleteMenu,
+  getAllMenuAdmin,
+  HideOrShowMenu
 };

@@ -6,6 +6,7 @@ import CustomerOrder from './pages/CustomerOrderspage'
 import AdminPage from './pages/AdminPage'
 import KitchenPage from './pages/KitchenPage'
 import AdminMenu from './pages/AdminMenu'
+import AdminMenuCreate from './pages/CreateMenu'
 
 function App() {
   return (
@@ -17,6 +18,8 @@ function App() {
         <Route path="/kitchen" element={<KitchenPage />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/admin/menu" element={<AdminMenu />} />
+        <Route path="/admin/menu/create" element={<AdminMenuCreate />} />
+
 
       </Routes>
     </div>

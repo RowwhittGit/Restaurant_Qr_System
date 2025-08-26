@@ -11,6 +11,7 @@ model Menu {
   id          Int      @id @default(autoincrement())
   name        String
   price       Float
+  isAvailable Boolean  @default(true)
   category    String[]
   image       String?
   createdAt   DateTime @default(now())
@@ -34,7 +35,7 @@ model OrderItem {
   orderId     Int
   order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   menuId      Int
-  menu        Menu     @relation(fields: [menuId], references: [id]) // Proper relation
+  menu        Menu     @relation(fields: [menuId], references: [id], onDelete: Cascade) // Proper relation
   quantity    Int
   createdAt   DateTime @default(now())
 }
