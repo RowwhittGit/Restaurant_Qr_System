@@ -2,9 +2,9 @@ import { useState, useEffect } from "react"
 import { Search, Heart, Home, User, MessageCircle, Plus, Menu } from "lucide-react"
 import { IoAddCircleSharp } from "react-icons/io5";
 import axios from "axios"
-import { useOrderStore } from "../stores/orderStore";
+import { useOrderStore } from "../../stores/orderStore";
 import { useNavigate, type NavigateFunction } from "react-router-dom";
-import Toast, { useToast } from "../components/Toast";
+import Toast, { useToast } from "../../components/Toast";
 
 interface FoodItem {
   id: number

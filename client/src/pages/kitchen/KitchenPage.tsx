@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { Clock, AlertCircle, RefreshCw } from 'lucide-react';
 import io from 'socket.io-client';
 import axios from 'axios';
 

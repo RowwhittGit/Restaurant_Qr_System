@@ -1,13 +1,14 @@
 import { Route, Routes } from 'react-router-dom'
-import More from './pages/More'
-// import Orders from './pages/Orders'
-import HomePage from './pages/Home'
-import CustomerOrder from './pages/CustomerOrderspage'
-import AdminPage from './pages/AdminPage'
-import KitchenPage from './pages/KitchenPage'
-import AdminMenu from './pages/AdminMenu'
-import AdminMenuCreate from './pages/CreateMenu'
-import AdminMenuUpdate from './pages/AdminEditMenu'
+
+import CustomerOrder from './pages/customer/CustomerOrderspage'
+import AdminPage from './pages/admin/AdminPage'
+import KitchenPage from './pages/kitchen/KitchenPage'
+import AdminMenu from './pages/admin/AdminMenu'
+import AdminMenuCreate from './pages/admin/CreateMenu'
+import AdminMenuUpdate from './pages/admin/AdminEditMenu'
+import HomePage from './pages/customer/Home'
+import More from './pages/customer/More'
+
 
 function App() {
   return (

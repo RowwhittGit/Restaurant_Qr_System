@@ -3,8 +3,8 @@ import { Search, Heart, Plus, Menu } from "lucide-react"
 import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
 import axios from "axios"
 import { useNavigate } from "react-router-dom";
-import Toast, { useToast } from "../components/Toast";
-import BottomNav from "../components/BottomNav";
+import Toast, { useToast } from "../../components/Toast";
+import BottomNav from "../../components/BottomNav";
 
 interface FoodItem {
   id: number

@@ -1,8 +1,8 @@
 import { IoAddCircleSharp, IoRemoveCircleSharp, IoTrashOutline } from "react-icons/io5";
 import { IoArrowBackOutline } from "react-icons/io5";
-import { useOrderStore } from "../stores/orderStore";
+import { useOrderStore } from "../../stores/orderStore";
 import { useNavigate, type NavigateFunction } from "react-router-dom";
-import Toast, { useToast } from "../components/Toast";
+import Toast, { useToast } from "../../components/Toast";
 
 interface FoodItem {
   id: number

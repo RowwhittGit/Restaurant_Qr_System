@@ -3,7 +3,7 @@ import { useState } from "react"
 import { ArrowLeft, Plus, X } from "lucide-react"
 import axios from "axios"
 import { useNavigate } from "react-router-dom"
-import Toast, { useToast } from "../components/Toast"
+import Toast, { useToast } from "../../components/Toast"
 
 interface MenuItemForm {
   name: string
