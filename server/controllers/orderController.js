@@ -143,38 +143,28 @@ export const getOrder = async (req, res) => {
 
 // Update order status (DB-first, then emit)
 export const updateOrderStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
   try {
-    const { id } = req.params;
-    const { status } = req.body;
-
-    if (!ALLOWED_STATUS.has(status)) {
-      return res.status(400).json({ error: 'Invalid status value' });
-    }
-
     const updatedOrder = await prisma.order.update({
-      where: { id: parseInt(id) },
-      data: { status },
-      include: { 
-        items: {
-          include: {
-            menu: true  // ✅ Include menu details
-          }
-        }
-      },
+      where: { id: Number(id) },
+      data: { status }
     });
 
-    // Emit to relevant rooms
     const io = req.app.get('io');
     if (io) {
+      // Notify the specific table (customer)
       io.to(`table_${updatedOrder.tableId}`).emit('orderStatusUpdate', updatedOrder);
+
+      // Notify admin & kitchen dashboards
       io.to('admin').emit('orderStatusUpdate', updatedOrder);
       io.to('kitchen').emit('orderStatusUpdate', updatedOrder);
     }
 
-    return res.json(updatedOrder);
+    res.status(200).json(updatedOrder).message = "Status updated";
   } catch (error) {
-    console.error('updateOrderStatus error:', error);
-    return res.status(500).json({ error: error.message });
+    res.status(500).json({ error: "Failed to update status" });
   }
 };
 

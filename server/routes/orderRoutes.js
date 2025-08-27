@@ -17,6 +17,6 @@ router.get('/kitchen', getAllOrders);
 
 
 //this will be a protected route for kitchen/admin to update order status
-router.put('/:id/status', updateOrderStatus);
+router.put('/status/:id', updateOrderStatus);
 
 export default router;
