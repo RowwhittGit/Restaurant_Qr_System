@@ -82,7 +82,7 @@ const KitchenPage: React.FC = () => {
   const fetchOrders = async () => {
     try {
       // You'll need to create this endpoint to get all active orders
-      const response = await axios.get("http://localhost:3000/api/orders/active");
+      const response = await axios.get("http://localhost:3000/api/orders/kitchen");
       setOrders(response.data);
       setLoading(false);
     } catch (error) {

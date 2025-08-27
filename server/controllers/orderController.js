@@ -37,7 +37,7 @@ export const createOrder = async (req, res) => {
       }
     }
 
-    // ✅ Create order with only schema-compatible fields
+    // ✅ Create order 
     const order = await prisma.order.create({
       data: {
         tableId: parseInt(tableId),
@@ -72,6 +72,32 @@ export const createOrder = async (req, res) => {
     return res.status(201).json(order);
   } catch (error) {
     console.error('createOrder error:', error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+
+// All active (unpaid) orders for the kitchen/admin view
+export const getAllOrders = async (req, res) => {
+  try {
+
+    const orders = await prisma.order.findMany({
+      where: {
+        status: { not: 'PAID' }, // Only active orders
+      },
+      include: { 
+        items: {
+          include: {
+            menu: true 
+          }
+        }
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    return res.json(orders);
+  } catch (error) {
+    console.error('getTableOrders error:', error);
     return res.status(500).json({ error: error.message });
   }
 };
@@ -169,7 +195,7 @@ export const getTableOrders = async (req, res) => {
           }
         }
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: 'asc' },
     });
 
     return res.json(orders);
