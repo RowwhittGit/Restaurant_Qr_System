@@ -14,6 +14,7 @@ router.post('/', createOrder);
 // router.get('/:id', getOrder);
 router.get('/table/:tableId', getTableOrders);
 router.get('/kitchen', getAllOrders);
+router.get('/:id', getOrder);
 
 
 //this will be a protected route for kitchen/admin to update order status

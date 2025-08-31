@@ -30,7 +30,6 @@ const KitchenPage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Status options for kitchen
   const statusOptions = [
     { value: 'PENDING', label: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
     { value: 'CONFIRMED', label: 'Confirmed', color: 'bg-blue-100 text-blue-800' },
@@ -39,16 +38,35 @@ const KitchenPage: React.FC = () => {
     { value: 'SERVED', label: 'Served', color: 'bg-gray-100 text-gray-800' },
   ];
 
-  // Join kitchen room on mount
+  // Fetch a single order with full details
+  const fetchSingleOrder = async (orderId: number) => {
+    try {
+      const response = await axios.get(`http://localhost:3000/api/orders/${orderId}`);
+      const normalizedOrder = {
+        ...response.data,
+        items: Array.isArray(response.data.items) ? response.data.items : []
+      };
+      
+      setOrders(prev =>
+        prev.map(order =>
+          order.id === orderId ? normalizedOrder : order
+        )
+      );
+    } catch (error) {
+      console.error("Error fetching single order:", error);
+    }
+  };
+
   useEffect(() => {
     socket.emit("join_room", { userType: "kitchen" });
     
-    // Listen for new orders
     socket.on("newOrder", (newOrder: Order) => {
       console.log("New order received:", newOrder);
-      setOrders(prev => [newOrder, ...prev]);
-      
-      // Show notification
+      setOrders(prev => [
+        { ...newOrder, items: Array.isArray(newOrder.items) ? newOrder.items : [] },
+        ...prev
+      ]);
+
       if (Notification.permission === 'granted') {
         new Notification(`New Order #${newOrder.id}`, {
           body: `Table ${newOrder.tableId} - ${newOrder.totalItems} items`,
@@ -57,33 +75,43 @@ const KitchenPage: React.FC = () => {
       }
     });
 
-    // Listen for order status updates
     socket.on("orderStatusUpdate", (updatedOrder: Order) => {
       console.log("Order status updated:", updatedOrder);
-      setOrders(prev => prev.map(order => 
-        order.id === updatedOrder.id ? updatedOrder : order
-      ));
+      
+      // If the updated order doesn't have items, fetch the full order
+      if (!updatedOrder.items || updatedOrder.items.length === 0) {
+        fetchSingleOrder(updatedOrder.id);
+      } else {
+        setOrders(prev =>
+          prev.map(order =>
+            order.id === updatedOrder.id
+              ? { ...updatedOrder, items: Array.isArray(updatedOrder.items) ? updatedOrder.items : [] }
+              : order
+          )
+        );
+      }
     });
 
-    // Request notification permission
     if (Notification.permission === 'default') {
       Notification.requestPermission();
     }
 
-    // Fetch existing orders
     fetchOrders();
 
     return () => {
       socket.off("newOrder");
       socket.off("orderStatusUpdate");
     };
-  }, []);
+  }, []); // Removed orderStatus dependency
 
   const fetchOrders = async () => {
     try {
-      // You'll need to create this endpoint to get all active orders
       const response = await axios.get("http://localhost:3000/api/orders/kitchen");
-      setOrders(response.data);
+      const normalized = response.data.map((o: any) => ({
+        ...o,
+        items: Array.isArray(o.items) ? o.items : []
+      }));
+      setOrders(normalized);
       setLoading(false);
     } catch (error) {
       console.error("Error fetching orders:", error);
@@ -93,10 +121,13 @@ const KitchenPage: React.FC = () => {
 
   const updateOrderStatus = async (orderId: number, newStatus: string) => {
     try {
-      await axios.patch(`http://localhost:3000/api/orders/${orderId}/status`, {
+      // Update status
+      await axios.put(`http://localhost:3000/api/orders/status/${orderId}`, {
         status: newStatus
       });
-      // The real-time update will come through socket
+      
+      // Fetch the updated order to ensure we have complete data
+      await fetchSingleOrder(orderId);
     } catch (error) {
       console.error("Error updating order status:", error);
     }
@@ -181,21 +212,28 @@ const KitchenPage: React.FC = () => {
                 {/* Order Items */}
                 <div className="px-6 py-4">
                   <div className="space-y-3 mb-4">
-                    {order.items.map((item) => (
-                      <div key={item.id} className="flex justify-between items-center">
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-900">{item.menu.name}</p>
-                          <p className="text-sm text-gray-500 capitalize">
-                            {item.menu.category.join(', ')}
-                          </p>
+                    {Array.isArray(order.items) && order.items.length > 0 ? (
+                      order.items.map((item) => (
+                        <div key={item.id} className="flex justify-between items-center">
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900">{item.menu.name}</p>
+                            <p className="text-sm text-gray-500 capitalize">
+                              {item.menu.category.join(', ')}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium">
+                              ×{item.quantity}
+                            </span>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium">
-                            ×{item.quantity}
-                          </span>
-                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-4">
+                        <RefreshCw className="h-6 w-6 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-500">Loading order details...</p>
                       </div>
-                    ))}
+                    )}
                   </div>
 
                   <div className="border-t pt-4">
@@ -208,11 +246,10 @@ const KitchenPage: React.FC = () => {
                     <div className="flex gap-2">
                       {statusOptions
                         .filter(option => {
-                          // Show next logical status options
-                          if (order.status === 'PENDING') return ['CONFIRMED'].includes(option.value);
-                          if (order.status === 'CONFIRMED') return ['PREPARING'].includes(option.value);
-                          if (order.status === 'PREPARING') return ['READY'].includes(option.value);
-                          if (order.status === 'READY') return ['SERVED'].includes(option.value);
+                          if (order.status === 'PENDING') return option.value === 'CONFIRMED';
+                          if (order.status === 'CONFIRMED') return option.value === 'PREPARING';
+                          if (order.status === 'PREPARING') return option.value === 'READY';
+                          if (order.status === 'READY') return option.value === 'SERVED';
                           return false;
                         })
                         .map((option) => (

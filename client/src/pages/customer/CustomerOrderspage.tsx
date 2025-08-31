@@ -98,13 +98,21 @@ export default function CustomerOrder() {
 
       // Clear local cart after confirmation
       clearOrders()
-
       fetchActiveOrders()
+    })
 
+    // when order status updates
+    socket.on("orderStatusUpdate", (updatedOrder: ActiveOrder) => {
+      setActiveOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order.id === updatedOrder.id ? { ...order, status: updatedOrder.status } : order
+        )
+      )
     })
 
     return () => {
       socket.off("orderPlaced")
+      socket.off("orderStatusUpdate")
     }
   }, [clearOrders])
 
