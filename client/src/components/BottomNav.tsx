@@ -9,8 +9,8 @@ const BottomNav: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div>
-      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-red-500 px-4 py-3">
+    <div >
+      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-red-500 px-4 py-3 rounded-md">
         <div className="flex items-center justify-around">
           <button
             className="text-white hover:bg-red-600 p-2 rounded"
