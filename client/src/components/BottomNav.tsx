@@ -1,5 +1,5 @@
 import React from "react";
-import { Home, User, MessageCircle, Heart } from "lucide-react";
+import { Home } from "lucide-react";
 import { MdOutlineRestaurantMenu } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { LuSquareMenu } from "react-icons/lu";
@@ -14,23 +14,23 @@ const BottomNav: React.FC = () => {
         <div className="flex items-center justify-around">
           <button
             className="text-white hover:bg-red-600 p-2 rounded"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/admin")}
           >
             <Home className="h-6 w-6" />
           </button>
           <button
             className="text-white hover:bg-red-600 p-2 rounded"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/admin/menu")}
           >
             <LuSquareMenu className="h-6 w-6" />
           </button>
           <button
             className="text-white hover:bg-red-600 p-2 rounded"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/admin/kitchen")}
           >
             <MdOutlineRestaurantMenu className="h-6 w-6" />
           </button>
-          <button className="text-white hover:bg-red-600 p-2 rounded">
+          <button className="text-white hover:bg-red-600 p-2 rounded" onClick={() => navigate("/admin/orders")}>
             <MdOutlineFastfood className="h-6 w-6" />
           </button>
         </div>
