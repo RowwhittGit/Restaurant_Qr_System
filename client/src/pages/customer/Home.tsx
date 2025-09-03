@@ -5,6 +5,7 @@ import axios from "axios"
 import { useOrderStore } from "../../stores/orderStore";
 import { useNavigate, type NavigateFunction } from "react-router-dom";
 import Toast, { useToast } from "../../components/Toast";
+import CustomerNav from "../../components/CustomerNav";
 
 interface FoodItem {
   id: number
@@ -178,30 +179,7 @@ export default function HomePage() {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-red-500 px-4 py-3">
-        <div className="flex items-center justify-around">
-          <button className="text-white hover:bg-red-600 p-2 rounded">
-            <Home className="h-6 w-6" />
-          </button>
-          <button className="text-white hover:bg-red-600 p-2 rounded">
-            <User className="h-6 w-6" />
-          </button>
-          <button className="text-white hover:bg-red-600 p-2 rounded">
-            <MessageCircle className="h-6 w-6" />
-          </button>
-          <button className="text-white hover:bg-red-600 p-2 rounded" onClick={() => navigate("/orders")}>
-            <Heart className="h-6 w-6" />
-          </button>
-        </div>
-      </div>
-
-      {/* Floating Action Button */}
-      <div className="fixed bottom-20 right-4">
-        <button className="bg-red-500 hover:bg-red-600 text-white rounded-full h-14 w-14 shadow-lg flex items-center justify-center">
-          <Plus className="h-6 w-6" />
-        </button>
-      </div>
-
+      <CustomerNav />
       {/* Debug indicator */}
       <div className="fixed bottom-4 right-4 bg-black/20 text-white text-xs px-2 py-1 rounded pointer-events-none">
         72 x 72
