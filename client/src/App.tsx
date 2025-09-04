@@ -9,6 +9,7 @@ import AdminMenuUpdate from './pages/admin/AdminEditMenu'
 import HomePage from './pages/customer/Home'
 import More from './pages/customer/More'
 import AdminKitchen from './pages/admin/AdminKitchen'
+import Chart from './pages/admin/Chart'
 
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
         <Route path="/admin/menu/create" element={<AdminMenuCreate />} />
         <Route path="/admin/menu/update/:id" element={<AdminMenuUpdate />} />
         <Route path='/admin/kitchen' element={<AdminKitchen />} />
+        <Route path='/admin/chart' element={<Chart />} />
 
 
       </Routes>

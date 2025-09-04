@@ -1,120 +1,151 @@
-//functions for admin home routes. This contains api for showing charts and graphs on admin home page
-
-
+// analyticsController.js
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
+export const getDateRange = (period, startDate, endDate) => {
+  const now = new Date();
 
-// 1. Get all orders for a given date
-export const getOrdersByDate = async (req, res) => {
-  try {
-    const { date } = req.query; // YYYY-MM-DD
-    if (!date) return res.status(400).json({ error: "Date query required" });
+  switch (period) {
+    case "today":
+      return {
+        start: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0),
+        end: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59),
+      };
 
-    const start = new Date(date);
-    const end = new Date(date);
-    end.setDate(end.getDate() + 1);
+    case "week": {
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday
+      startOfWeek.setHours(0, 0, 0);
 
-    const orders = await prisma.order.findMany({
-      where: {
-        createdAt: { gte: start, lt: end },
-      },
-      include: { items: { include: { menu: true } } },
-    });
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59);
 
-    res.json(orders);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Something went wrong" });
-  }
-};
-
-// 2. Daily sales (revenue + order count)
-export const getDailySales = async (req, res) => {
-  try {
-    const sales = await prisma.$queryRaw`
-      SELECT DATE("createdAt") as day, 
-             SUM("totalPrice") as revenue, 
-             COUNT(*) as orders
-      FROM "Order"
-      GROUP BY day
-      ORDER BY day;
-    `;
-    
-    // Convert BigInt values to Numbers
-    const serializedSales = sales.map(sale => ({
-      ...sale,
-      revenue: Number(sale.revenue),
-      orders: Number(sale.orders)
-    }));
-    
-    res.json(serializedSales);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Something went wrong" });
-  }
-};
-
-// 3. Best-selling items
-export const getBestSellers = async (req, res) => {
-  try {
-    const items = await prisma.$queryRaw`
-      SELECT m.name, SUM(oi.quantity)::INTEGER as totalSold
-      FROM "OrderItem" oi
-      JOIN "Menu" m ON oi."menuId" = m.id
-      GROUP BY m.name
-      ORDER BY totalSold DESC
-      LIMIT 5;
-    `;
-    
-    res.json(items);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Something went wrong" });
-  }
-};
-
-// 4. Orders grouped by status
-export const getOrdersByStatus = async (req, res) => {
-  try {
-    const statusCounts = await prisma.order.groupBy({
-      by: ["status"],
-      _count: true,
-    });
-    res.json(statusCounts);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Something went wrong" });
-  }
-};
-
-// 5. Peak hours (busiest hours)
-export const getPeakHours = async (req, res) => {
-  try {
-    const { startDate, endDate } = req.query;
-
-    let filter = "";
-    if (startDate && endDate) {
-      filter = `WHERE "createdAt" >= '${startDate}' AND "createdAt" < '${endDate}'`;
+      return { start: startOfWeek, end: endOfWeek };
     }
 
-    const hours = await prisma.$queryRawUnsafe(`
-      SELECT EXTRACT(HOUR FROM "createdAt") as hour, COUNT(*) as orderCount
-      FROM "Order"
-      ${filter}
-      GROUP BY hour
-      ORDER BY orderCount DESC;
-    `);
+    case "month":
+      return {
+        start: new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0),
+        end: new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59),
+      };
 
-    const formatted = hours.map(h => ({
-      hour: Number(h.hour),
-      orderCount: Number(h.ordercount || h.orderCount),
-    }));
+    case "custom":
+      if (!startDate || !endDate) {
+        throw new Error("Custom period requires startDate and endDate");
+      }
+      return {
+        start: new Date(startDate),
+        end: new Date(endDate),
+      };
 
-    res.json(formatted);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Something went wrong" });
+    default:
+      throw new Error("Invalid period");
   }
 };
 
+/* ------------------------- Summary Data (Revenue + Orders) ------------------------- */
+//havent tested this one as well
+export const getSummaryData = async (dateRange) => {
+  const result = await prisma.order.aggregate({
+    where: {
+      status: "PAID",
+      createdAt: {
+        gte: dateRange.start,
+        lte: dateRange.end,
+      },
+    },
+    _sum: { totalPrice: true },
+    _count: { id: true },
+  });
+
+  return {
+    totalRevenue: result._sum.totalPrice || 0,
+    totalOrders: result._count.id || 0,
+  };
+};
+
+//havent tested this one
+export const getRevenueAnalytics = async (req, res) => {
+  try {
+    const { period = "today", startDate, endDate } = req.query;
+
+    const dateRange = getDateRange(period, startDate, endDate);
+    const summary = await getSummaryData(dateRange);
+
+    res.json({
+      success: true,
+      data: {
+        ...summary,
+        period,
+        dateRange: {
+          start: dateRange.start.toISOString(),
+          end: dateRange.end.toISOString(),
+        },
+        metadata: {
+          generatedAt: new Date().toISOString(),
+          currency: "NPR",
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Revenue analytics error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch revenue analytics",
+    });
+  }
+};
+
+//needs update on the date
+export const getPeakTodaySales = async (req, res) => {
+  try {
+    const { date } = req.query; // format: YYYY-MM-DD
+    const targetDate = date ? new Date(date) : new Date();
+    console.log("Target date for peak sales:", targetDate);
+
+    // get start & end of the day
+    const startOfDay = new Date(targetDate);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(targetDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // fetch all paid orders of that day
+    const orders = await prisma.order.findMany({
+      where: {
+        status: "PAID",
+        createdAt: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+      include: {
+        items: {
+          include: { menu: true },
+        },
+      },
+    });
+
+    // bucketize by hours
+    const buckets = Array.from({ length: 24 }, (_, i) => ({
+      timeRange: `${i}:00 - ${i + 1}:00`,
+      orders: 0,
+      revenue: 0,
+    }));
+
+    orders.forEach((order) => {
+      const hour = order.createdAt.getHours();
+      buckets[hour].orders += 1;
+      buckets[hour].revenue += order.totalPrice;
+    });
+
+    res.json({
+      success: true,
+      data: buckets,
+    });
+  } catch (err) {
+    console.error("Peak sales error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
