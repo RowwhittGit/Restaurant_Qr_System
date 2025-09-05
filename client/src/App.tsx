@@ -11,6 +11,8 @@ import HomePage from './pages/customer/Home'
 import AdminKitchen from './pages/admin/AdminKitchen'
 import Chart from './pages/admin/Chart'
 import LocationCheck from './pages/admin/LocationCheck'
+import Chart2 from './pages/admin/Chart2'
+import Chart3 from './pages/admin/Chart3'
 
 
 function App() {
@@ -27,6 +29,8 @@ function App() {
         <Route path="/admin/menu/update/:id" element={<AdminMenuUpdate />} />
         <Route path='/admin/kitchen' element={<AdminKitchen />} />
         <Route path='/admin/chart' element={<Chart />} />
+        <Route path='/admin/chart/2' element={<Chart2 />} />
+        <Route path='/admin/chart/3' element={<Chart3 />} />
       </Routes>
     </div>
   )
