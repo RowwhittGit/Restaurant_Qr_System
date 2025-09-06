@@ -4,6 +4,8 @@ import { authMiddleware } from '../middleware/authMiddleware.js';
 
 import {getWeeklySales, getTodaysPeakSales, getWeeklyBestSellers} from '../controllers/AdminController.js'
 
+
+//Configured Auth
 router.use(authMiddleware(["admin"]));
 
 // GET /api/admin/weekly-sales - Get weekly sales data
@@ -12,6 +14,7 @@ router.get('/weekly-sales', getWeeklySales);
 //GET today's peak sales time (hourly breakdown)
 router.get('/peak-sales', getTodaysPeakSales);
 
+//TODO: query optimization needed. the current query is slow
 //Get best selling menu items in last 7 days
 router.get("/weekly-best-sellers", getWeeklyBestSellers);
 

@@ -8,20 +8,28 @@ import {
   getAllOrders
 } from '../controllers/orderController.js';
 
-
-
 const router = express.Router();
 
+// ---------------------------
+// PUBLIC ROUTES
+// ---------------------------
 router.post('/', createOrder);
-// router.get('/:id', getOrder);
+
+// ---------------------------
+// SPECIFIC ROUTES (must come BEFORE generic /:id route)
+// ---------------------------
 router.get('/table/:tableId', getTableOrders);
+
+// ---------------------------
+// PROTECTED ROUTES
+// ---------------------------
+router.get('/kitchen', authMiddleware(["kitchen", "admin"]), getAllOrders);
+router.put('/status/:id', authMiddleware(["kitchen", "admin"]), updateOrderStatus);
+
+// ---------------------------
+// GENERIC ROUTES (must come LAST)
+// ---------------------------
+// This catches any /:id that wasn't matched by specific routes above
 router.get('/:id', getOrder);
-
-
-
-//this will be a protected route for kitchen/admin to update order status
-router.use(authMiddleware(["kitchen", "admin"]));
-router.get('/kitchen', getAllOrders);
-router.put('/status/:id', updateOrderStatus);
 
 export default router;

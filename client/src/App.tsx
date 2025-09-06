@@ -13,12 +13,14 @@ import Chart from './pages/admin/Chart'
 import LocationCheck from './pages/admin/LocationCheck'
 import Chart2 from './pages/admin/Chart2'
 import Chart3 from './pages/admin/Chart3'
+import Login from './pages/Login'
 
 
 function App() {
   return (
     <div>
       <Routes>
+        <Route path='/login' element={<Login />} />
         <Route path='/' element={<HomePage />} />
         <Route path='/more' element={<LocationCheck />} />
         <Route path='/orders' element={<CustomerOrder />} />
