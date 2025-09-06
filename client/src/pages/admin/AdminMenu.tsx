@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { Search, Heart, Plus, Menu } from "lucide-react"
 import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
-import axios from "axios"
+import axios, { AxiosError } from "axios"
 import { useNavigate } from "react-router-dom";
 import Toast, { useToast } from "../../components/Toast";
 import BottomNav from "../../components/BottomNav";
@@ -31,7 +31,9 @@ export default function AdminMenu() {
   useEffect(() => {
     const fetchFoodItems = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/api/menu/adminMenu")
+        const response = await axios.get("http://localhost:3000/api/menu/adminMenu" , {
+        withCredentials: true,
+      })
         setFoodItems(response.data.data)
         setDisplayItems(response.data.data)
         console.log(response.data);
@@ -39,6 +41,10 @@ export default function AdminMenu() {
       } catch (error) {
         console.error("Error fetching food items:", error)
         showToast("Failed to load food items", { type: "error" });
+        const axiosError = error as AxiosError;
+        if (axiosError.response?.status === 401) {
+        navigate('/login');
+      }
       }
     }
     fetchFoodItems()

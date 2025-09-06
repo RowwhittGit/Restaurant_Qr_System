@@ -6,6 +6,9 @@ import { useNavigate } from "react-router-dom"
 import Toast, { useToast } from "./../components/Toast"
 import { FaEnvelope, FaLock } from "react-icons/fa"
 
+// Configure axios globally to include cookies
+axios.defaults.withCredentials = true
+
 export default function Login() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -26,15 +29,16 @@ export default function Login() {
       const response = await axios.post("http://localhost:3000/api/auth/login", {
         email,
         password,
+      }, {
+        withCredentials: true,
       })
-
-      // Save token if provided
-      if (response.data?.token) {
-        localStorage.setItem("token", response.data.token)
-      }
-
       showToast("Login successful!", { type: "success" })
-      navigate("/") // redirect to homepage
+      if (response.data.role === "admin") {
+        navigate("/admin/menu")
+      } else if (response.data.role === "kitchen") {
+        navigate("/kitchen")
+      }
+      // navigate("/admin/menu") // redirect to homepage
     } catch (error: any) {
       console.error("Login error:", error)
       showToast(error.response?.data?.message || "Invalid credentials", {

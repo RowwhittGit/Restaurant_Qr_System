@@ -26,7 +26,10 @@ const io = new Server(httpServer, {
 // Make io available to controllers (no circular imports)
 app.set('io', io);
 
-app.use(cors({ origin: '*' }));
+app.use(cors({
+  origin: 'http://localhost:5173', // Your Vite dev server URL
+  credentials: true
+}));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
