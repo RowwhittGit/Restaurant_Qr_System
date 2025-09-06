@@ -19,17 +19,11 @@ interface DataItem {
   revenue: number
 }
 
-interface ApiResponse {
-  date: string
-  success: boolean
-  data: DataItem[]
-}
-
 const COLORS = ["#ef4444", "#f59e0b", "#3b82f6", "#10b981", "#6366f1", "#ec4899"]
 
 function Chart() {
   const [chartType, setChartType] = useState<"orders" | "revenue">("revenue")
-  const [apiData, setApiData] = useState<ApiResponse | null>(null)
+  const [apiData, setApiData] = useState<DataItem[]>([]) // ✅ array instead of object
   const [loading, setLoading] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
   const navigate = useNavigate()
@@ -37,8 +31,8 @@ function Chart() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get<ApiResponse>(
-          "https://dummyjson.com/c/d4c4-525e-44d7-952b"
+        const response = await axios.get<DataItem[]>(
+          "http://localhost:3000/api/admin/peak-sales"
         )
         console.log("Peak sales data:", response.data)
         setApiData(response.data)
@@ -52,17 +46,16 @@ function Chart() {
   }, [])
 
   if (loading) return <p className="text-center text-gray-500">Loading...</p>
-  if (!apiData) return <p className="text-center text-gray-500">No data available</p>
+  if (!apiData || apiData.length === 0) return <p className="text-center text-gray-500">No data available</p>
 
-  // Prepare chart data
-  const chartData = apiData.data
+  // ✅ apiData is an array now
+  const chartData = apiData
     .filter((item) => item[chartType] > 0)
     .map((item) => ({
       name: item.timeRange,
       value: item[chartType],
     }))
 
-  // Handle navigation + close menu
   const handleNavigate = (path: string) => {
     navigate(path)
     setMenuOpen(false)
@@ -90,7 +83,6 @@ function Chart() {
             <Menu className="h-5 w-5" />
           </button>
 
-          {/* 🔽 Dropdown Menu */}
           {menuOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 z-50">
               <button
@@ -116,13 +108,12 @@ function Chart() {
         </div>
       </div>
 
-      {/* Chart Header (interactive) */}
+      {/* Chart Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4">
         <div>
           <h2 className="font-bold text-lg text-gray-900">
             {chartType === "orders" ? "Orders Distribution" : "Revenue Distribution"}
           </h2>
-          <p className="text-sm text-gray-500">({apiData.date})</p>
         </div>
         <button
           onClick={() => setChartType(chartType === "orders" ? "revenue" : "orders")}
@@ -153,13 +144,12 @@ function Chart() {
           </PieChart>
         </ResponsiveContainer>
 
-        {/* Center text */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-lg font-bold text-gray-900 capitalize">{chartType}</span>
         </div>
       </div>
 
-      {/* Data List Below */}
+      {/* Data List */}
       <div className="mt-6 space-y-3">
         {chartData.map((item, index) => (
           <div

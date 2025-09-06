@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Search, Heart, Home, User, MessageCircle, Plus, Menu } from "lucide-react"
+import { Search, Menu } from "lucide-react"
 import { IoAddCircleSharp } from "react-icons/io5";
 import axios from "axios"
 import { useOrderStore } from "../../stores/orderStore";
@@ -30,7 +30,7 @@ export default function HomePage() {
   useEffect(() => {
     const fetchFoodItems = async () => {
       try {
-        const response = await axios.get("http://192.168.1.75:3000/api/menu/")
+        const response = await axios.get("http://localhost:3000/api/menu/")
         setFoodItems(response.data.data)
         setDisplayItems(response.data.data)
         console.log(response.data);
