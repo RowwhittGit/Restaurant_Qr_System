@@ -3,6 +3,8 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import { ArrowLeft, Plus, X } from "lucide-react"
 import axios from "axios"
+import { AxiosError } from "axios"
+import baseApi from "../../utils/api"
 import { useNavigate, useParams } from "react-router-dom"
 import Toast, { useToast } from "../../components/Toast"
 
@@ -47,12 +49,18 @@ export default function AdminMenuUpdate() {
   useEffect(() => {
     const fetchItem = async () => {
       try {
-        const res = await axios.get(`http://localhost:3000/api/menu/${id}`)
+        const res = await baseApi.get(`/menu/${id}`, {
+          withCredentials: true,
+        })
         setFormData(res.data.data)
         console.log("Fetched menu item:", res.data)
       } catch (error) {
         console.error("Error fetching menu item:", error)
         showToast("Failed to fetch menu item", { type: "error" })
+        const axiosError = error as AxiosError;
+        if (axiosError.response?.status === 401) {
+        navigate('/login');
+        }
       } finally {
         setLoading(false)
       }
@@ -140,7 +148,7 @@ export default function AdminMenuUpdate() {
         image: formData.image,
       }
 
-      await axios.put(`http://localhost:3000/api/menu/${id}`, submitData)
+      await baseApi.put(`/menu/${id}`, submitData)
 
       showToast("Menu item updated successfully!", {
         type: "success",

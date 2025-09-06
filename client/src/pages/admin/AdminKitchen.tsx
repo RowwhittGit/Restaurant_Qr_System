@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { RefreshCw, Clock } from "lucide-react";
-import axios from "axios";
+import { AxiosError } from "axios";
+import { useNavigate } from "react-router-dom";
 import io from "socket.io-client";
 import BottomNav from "../../components/BottomNav";
 import Toast, { useToast } from "../../components/Toast";
+import baseApi from "../../utils/api";
 
 interface OrderItem {
   id: number;
@@ -41,10 +43,13 @@ const AdminKitchen: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const { showToast } = useToast();
+  const navigate = useNavigate();
 
   const fetchSingleOrder = async (orderId: number) => {
     try {
-      const res = await axios.get(`http://localhost:3000/api/orders/${orderId}`);
+      const res = await baseApi.get(`/orders/${orderId}`, {
+        withCredentials: true,
+      });
       const normalized = {
         ...res.data,
         items: Array.isArray(res.data.items) ? res.data.items : [],
@@ -54,12 +59,18 @@ const AdminKitchen: React.FC = () => {
       );
     } catch (err) {
       console.error("Error fetching single order:", err);
+      const axiosError = err as AxiosError;
+      if (axiosError.response?.status === 401) {
+      navigate('/login');
+    }
     }
   };
 
   const fetchOrders = async () => {
     try {
-      const res = await axios.get("http://localhost:3000/api/orders/kitchen");
+      const res = await baseApi.get("/orders/kitchen", {
+        withCredentials: true,
+      });
       const normalized = res.data.map((o: any) => ({
         ...o,
         items: Array.isArray(o.items) ? o.items : [],
@@ -69,13 +80,20 @@ const AdminKitchen: React.FC = () => {
     } catch (err) {
       console.error("Error fetching orders:", err);
       setLoading(false);
+      const axiosError = err as AxiosError;
+      console.log(axiosError);
+      if (axiosError.response?.status === 401) {
+      navigate('/login');
+    }
     }
   };
 
   const updateOrderStatus = async (orderId: number, newStatus: string) => {
     try {
-      await axios.put(`http://localhost:3000/api/orders/status/${orderId}`, {
+      await baseApi.put(`/orders/status/${orderId}`,  {
         status: newStatus,
+      }, {
+        withCredentials: true,
       });
       await fetchSingleOrder(orderId);
       showToast(`Order #${orderId} updated to ${newStatus}`, { type: "success" });

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { Search, Heart, Plus, Menu } from "lucide-react"
 import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
-import axios, { AxiosError } from "axios"
+import { AxiosError } from "axios"
 import { useNavigate } from "react-router-dom";
 import Toast, { useToast } from "../../components/Toast";
 import BottomNav from "../../components/BottomNav";
@@ -86,7 +86,7 @@ export default function AdminMenu() {
       
       // Make PATCH request to toggle availability
       //mock api endpoint
-       await axios.patch(`http://localhost:3000/api/menu/${item.id}/availability/`);
+       await baseApi.patch(`/menu/${item.id}/availability/`);
       
       // Update local state with the toggled availability
       setFoodItems(prevItems => 

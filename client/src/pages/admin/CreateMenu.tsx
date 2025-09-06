@@ -4,6 +4,7 @@ import { ArrowLeft, Plus, X } from "lucide-react"
 import axios from "axios"
 import { useNavigate } from "react-router-dom"
 import Toast, { useToast } from "../../components/Toast"
+import baseApi from "../../utils/api"
 
 interface MenuItemForm {
   name: string
@@ -118,7 +119,9 @@ export default function AdminMenuCreate() {
         image: formData.image, // ✅ already uploaded to Cloudinary
       }
 
-      await axios.post("http://localhost:3000/api/menu/", submitData)
+      await baseApi.post("/menu/", submitData, {
+        withCredentials: true,
+      })
 
       showToast("Menu item created successfully!", {
         type: "success",
@@ -140,6 +143,12 @@ export default function AdminMenuCreate() {
           autoClose: 3000,
         },
       })
+
+      const axiosError = error as any
+      if (axiosError.response?.status === 401) {
+        navigate('/login');
+      }
+      
     } finally {
       setIsSubmitting(false)
     }
