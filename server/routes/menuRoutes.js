@@ -1,7 +1,6 @@
 import express from 'express';
 const router = express.Router();
 
-import { login } from '../controllers/authController.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 
 import { 
@@ -14,21 +13,15 @@ import {
   HideOrShowMenu
 } from '../controllers/menuController.js';
 
-// ---------------------------
-// LOGIN
-// ---------------------------
-router.post('/login', login);
 
-// ---------------------------
 // PUBLIC ROUTES (customers)
-// ---------------------------
+
 // Customers can view menus without auth
 router.get('/', getAllMenus);
 // router.get('/:id', getMenuById);  
 
-// ---------------------------
 // ADMIN ROUTES (protected)
-// ---------------------------
+
 // Only admins can access below
 router.use(authMiddleware(["admin"]));
 

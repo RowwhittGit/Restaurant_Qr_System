@@ -119,7 +119,7 @@ export const getOrder = async (req, res) => {
 
     const orderId = parseInt(id, 10);
     if (isNaN(orderId)) {
-      return res.status(400).json({ error: "Invalid order ID" });
+      return res.status(400).json({ error: "Invalid order ID please check" });
     }
 
     const order = await prisma.order.findUnique({

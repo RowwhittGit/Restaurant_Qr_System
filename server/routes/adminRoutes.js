@@ -1,9 +1,10 @@
 import express from 'express';
 const router = express.Router();
-import { login } from '../controllers/authController.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 
 import {getWeeklySales, getTodaysPeakSales, getWeeklyBestSellers} from '../controllers/AdminController.js'
+
+router.use(authMiddleware(["admin"]));
 
 // GET /api/admin/weekly-sales - Get weekly sales data
 router.get('/weekly-sales', getWeeklySales);
