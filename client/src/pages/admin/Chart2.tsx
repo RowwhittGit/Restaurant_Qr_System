@@ -59,6 +59,7 @@ function Chart2() {
     orders: item.totalOrders,
     revenue: item.totalRevenue,
   }))
+  // console.log("Transformed chart data:", chartData)
 
   // Handle navigation + close menu
   const handleNavigate = (path: string) => {
@@ -152,7 +153,7 @@ function Chart2() {
       </div>
 
       {/* Data List Below */}
-      <div className="mt-6 space-y-3">
+      <div className="mt-6 space-y-3 pb-16">
         {chartData.map((item, index) => (
           <div
             key={index}

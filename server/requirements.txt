@@ -1,3 +1,5 @@
 bcryptjs
 jsonwebtoken
 prisma
+cookie-parser
+dotenv
