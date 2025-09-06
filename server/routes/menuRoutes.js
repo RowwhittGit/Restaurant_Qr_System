@@ -1,8 +1,12 @@
 import express from 'express';
 const router = express.Router();
+
+import { login } from '../controllers/authController.js';
+import { authMiddleware } from '../middleware/authMiddleware.js';
+
 import { 
   getAllMenus, 
-  getMenuById, 
+  // getMenuById,
   createMenu, 
   updateMenu, 
   deleteMenu,
@@ -10,26 +14,37 @@ import {
   HideOrShowMenu
 } from '../controllers/menuController.js';
 
-// PUBLIC ROUTES (No authentication required - for customers)
-// GET /api/menu - Get all menu items (customers can view)
+// ---------------------------
+// LOGIN
+// ---------------------------
+router.post('/login', login);
+
+// ---------------------------
+// PUBLIC ROUTES (customers)
+// ---------------------------
+// Customers can view menus without auth
 router.get('/', getAllMenus);
+// router.get('/:id', getMenuById);  
+
+// ---------------------------
+// ADMIN ROUTES (protected)
+// ---------------------------
+// Only admins can access below
+router.use(authMiddleware(["admin"]));
+
+// Get all menus for admin panel
 router.get('/adminMenu', getAllMenuAdmin);
 
+// Create new menu
+router.post('/', createMenu);
 
-// GET /api/menu/:id - Get single menu item (customers can view)
-router.get('/:id', getMenuById);
-
-// ADMIN ROUTES (Authentication required)
-// POST /api/menu - Create new menu item (admin only)
-router.post('/',  createMenu);
-
-// PATCH /api/menu/:id - Hide or show menu item (admin only)
+// Hide/show menu
 router.patch('/:id/availability', HideOrShowMenu);
 
-// PUT /api/menu/:id - Update menu item (admin only)
+// Update menu
 router.put('/:id', updateMenu);
 
-// DELETE /api/menu/:id - Delete menu item (admin only)
+// Delete menu
 router.delete('/:id', deleteMenu);
 
 export default router;

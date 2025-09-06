@@ -40,7 +40,7 @@ const getAllMenuAdmin = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error fetching menu items',
+      message: 'Error fetching menu items what',
       error: error.message
     });
   }
@@ -142,34 +142,34 @@ const createMenu = async (req, res) => {
 
 
 // Get single menu item by ID
-const getMenuById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const menu = await prisma.menu.findUnique({
-      where: {
-        id: parseInt(id)
-      }
-    });
+// const getMenuById = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const menu = await prisma.menu.findUnique({
+//       where: {
+//         id: parseInt(id)
+//       }
+//     });
 
-    if (!menu) {
-      return res.status(404).json({
-        success: false,
-        message: 'Menu item not found'
-      });
-    }
+//     if (!menu) {
+//       return res.status(404).json({
+//         success: false,
+//         message: 'Menu item not found'
+//       });
+//     }
 
-    res.status(200).json({
-      success: true,
-      data: menu
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching menu item',
-      error: error.message
-    });
-  }
-};
+//     res.status(200).json({
+//       success: true,
+//       data: menu
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       success: false,
+//       message: 'Error fetching menu item man',
+//       error: error.message
+//     });
+//   }
+// };
 
 
 
@@ -273,7 +273,7 @@ const deleteMenu = async (req, res) => {
 
 export {
   getAllMenus,
-  getMenuById,
+  // getMenuById,
   createMenu,
   updateMenu,
   deleteMenu,

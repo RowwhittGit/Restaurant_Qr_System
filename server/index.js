@@ -8,6 +8,7 @@ import cors from 'cors';
 import menuRoutes from './routes/menuRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import adminRoutes from "./routes/adminRoutes.js";
+import authRoutes from "./routes/authRoutes.js"
 import prisma from './config/db.js';
 
 dotenv.config();
@@ -33,6 +34,7 @@ app.use('/api/menu', menuRoutes);
 app.use('/api/orders', orderRoutes);
 // Admin routes
 app.use("/api/admin", adminRoutes)
+app.use("/api/auth", authRoutes)
 
 /*
 PUBLIC ROUTES (No auth needed - customers):

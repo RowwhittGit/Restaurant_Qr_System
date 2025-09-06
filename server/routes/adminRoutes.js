@@ -1,5 +1,7 @@
 import express from 'express';
 const router = express.Router();
+import { login } from '../controllers/authController.js';
+import { authMiddleware } from '../middleware/authMiddleware.js';
 
 import {getWeeklySales, getTodaysPeakSales, getWeeklyBestSellers} from '../controllers/AdminController.js'
 
