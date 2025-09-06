@@ -5,7 +5,7 @@ import { authMiddleware } from '../middleware/authMiddleware.js';
 
 import { 
   getAllMenus, 
-  // getMenuById,
+  getMenuById,
   createMenu, 
   updateMenu, 
   deleteMenu,
@@ -18,7 +18,6 @@ import {
 
 // Customers can view menus without auth
 router.get('/', getAllMenus);
-// router.get('/:id', getMenuById);  
 
 // ADMIN ROUTES (protected)
 
@@ -33,6 +32,8 @@ router.post('/', createMenu);
 
 // Hide/show menu
 router.patch('/:id/availability', HideOrShowMenu);
+
+router.get('/:id', getMenuById);  
 
 // Update menu
 router.put('/:id', updateMenu);

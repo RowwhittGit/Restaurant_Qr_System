@@ -5,6 +5,7 @@ import axios, { AxiosError } from "axios"
 import { useNavigate } from "react-router-dom";
 import Toast, { useToast } from "../../components/Toast";
 import BottomNav from "../../components/BottomNav";
+import baseApi from "../../utils/api";
 
 interface FoodItem {
   id: number
@@ -31,7 +32,7 @@ export default function AdminMenu() {
   useEffect(() => {
     const fetchFoodItems = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/api/menu/adminMenu" , {
+        const response = await baseApi.get("/menu/adminMenu" , {
         withCredentials: true,
       })
         setFoodItems(response.data.data)

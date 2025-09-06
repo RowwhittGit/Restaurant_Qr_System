@@ -8,6 +8,7 @@ import { FaEnvelope, FaLock } from "react-icons/fa"
 
 // Configure axios globally to include cookies
 axios.defaults.withCredentials = true
+import baseApi from "../utils/api"
 
 export default function Login() {
   const [email, setEmail] = useState("")
@@ -26,7 +27,7 @@ export default function Login() {
 
     try {
       setLoading(true)
-      const response = await axios.post("http://localhost:3000/api/auth/login", {
+      const response = await baseApi.post("/auth/login", {
         email,
         password,
       }, {
