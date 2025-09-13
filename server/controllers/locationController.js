@@ -1,90 +1,125 @@
-import * as turf from '@turf/turf';
+import * as turf from "@turf/turf";
 
 const restaurantArea = {
-    type: "Feature",
-    properites: {},
-    geometry: {
-            type: "Polygon",
-            coordinates: [
-          [
-            [
-              85.27449595046653,
-              27.678563890752656
-            ],
-            [
-              85.27445376629254,
-              27.678430917784027
-            ],
-            [
-              85.2745185491313,
-              27.678405123677592
-            ],
-            [
-              85.27459036266379,
-              27.678537651952382
-            ],
-            [
-              85.27449595046653,
-              27.678563890752656
-            ]
-          ]
-            ],
-          },
-}
+  type: "Feature",
+  properties: {},
+  geometry: {
+    type: "Polygon",
+    coordinates: [
+      [
+        [85.27450443366104, 27.678628011537334],
+        [85.27448727121518, 27.67862726488209],
+        [85.27447027405373, 27.6786250321071],
+        [85.27445360586935, 27.678621334715288],
+        [85.27443742718638, 27.67861620831471],
+        [85.27442189381493, 27.6786097022756],
+        [85.27440715535029, 27.678601879254924],
+        [85.27439335373225, 27.678592814592896],
+        [85.27438062187817, 27.67858259558749],
+        [85.27436908240283, 27.67857132065361],
+        [85.27435884643761, 27.678559098375345],
+        [85.27435001256022, 27.67854604646021],
+        [85.27434266584545, 27.678532290605556],
+        [85.27433687704568, 27.67851796328803],
+        [85.27433270190971, 27.678503202487722],
+        [85.27433018064576, 27.678488150359364],
+        [85.2743293375343, 27.67847295186326],
+        [85.27433018069424, 27.678457753369276],
+        [85.27433270200484, 27.678442701247175],
+        [85.27433687718379, 27.678427940457038],
+        [85.2743426660212, 27.6784136131532],
+        [85.27435001276689, 27.678399857315224],
+        [85.27435884666724, 27.67838680541912],
+        [85.2743690826466, 27.6783745831615],
+        [85.27438062212673, 27.67836330824909],
+        [85.27439335397604, 27.678353089265148],
+        [85.27440715557994, 27.678344024623772],
+        [85.2744218940216, 27.67833620162212],
+        [85.27443742736214, 27.67832969559969],
+        [85.27445360600744, 27.6783245692128],
+        [85.27447027414884, 27.678320871831158],
+        [85.27448727126365, 27.678318639062432],
+        [85.27450443366104, 27.678317892409304],
+        [85.27452159605842, 27.678318639062432],
+        [85.27453859317322, 27.678320871831158],
+        [85.27455526131462, 27.6783245692128],
+        [85.27457143995993, 27.67832969559969],
+        [85.27458697330047, 27.67833620162212],
+        [85.27460171174215, 27.678344024623772],
+        [85.27461551334603, 27.678353089265148],
+        [85.27462824519534, 27.67836330824909],
+        [85.27463978467547, 27.6783745831615],
+        [85.27465002065483, 27.67838680541912],
+        [85.27465885455517, 27.678399857315224],
+        [85.27466620130087, 27.6784136131532],
+        [85.2746719901383, 27.678427940457038],
+        [85.27467616531723, 27.678442701247175],
+        [85.27467868662782, 27.678457753369276],
+        [85.27467952978776, 27.67847295186326],
+        [85.27467868667632, 27.678488150359364],
+        [85.27467616541236, 27.678503202487722],
+        [85.27467199027637, 27.67851796328803],
+        [85.27466620147662, 27.678532290605556],
+        [85.27465885476184, 27.67854604646021],
+        [85.27465002088447, 27.678559098375345],
+        [85.27463978491924, 27.67857132065361],
+        [85.27462824544389, 27.67858259558749],
+        [85.27461551358981, 27.678592814592896],
+        [85.27460171197178, 27.678601879254924],
+        [85.27458697350714, 27.6786097022756],
+        [85.27457144013569, 27.67861620831471],
+        [85.27455526145273, 27.678621334715288],
+        [85.27453859326835, 27.6786250321071],
+        [85.27452159610691, 27.67862726488209],
+        [85.27450443366104, 27.678628011537334]
+      ]
+    ]
+  }
+};
 
-const checkLocation = ((req, res) => {
-    console.log("Received:", req.body);
-    const { lat, lng } = req.body;
+const checkLocation = (req, res) => {
+  console.log("Received:", req.body);
+  const { lat, lng } = req.body;
 
-    if (!lat || !lng) {
-        return res.status(400).json({ message: "Missing coordinates" });
+  if (lat == null || lng == null) {
+    return res.status(400).json({ message: "Missing coordinates" });
+  }
+
+  const point = turf.point([lng, lat]);
+
+  // Strict inside check
+  const isInsideStrict = turf.booleanPointInPolygon(point, restaurantArea);
+
+  // Add tolerance check for boundary points
+  const polygonBoundary = turf.polygonToLine(restaurantArea);
+  const distanceMeters = turf.pointToLineDistance(point, polygonBoundary, { units: "meters" });
+
+  const TOLERANCE_METERS = 1; // consider points within 1m of boundary as inside
+  const isInside = isInsideStrict || distanceMeters <= TOLERANCE_METERS;
+
+  let response = { inside: isInside, lat, lng };
+
+  if (!isInside) {
+    try {
+      const nearestPoint = turf.nearestPointOnLine(polygonBoundary, point);
+      response.distance = {
+        meters: Math.round(distanceMeters),
+        kilometers: Math.round(distanceMeters) / 1000,
+        nearestPoint: {
+          lat: nearestPoint.geometry.coordinates[1],
+          lng: nearestPoint.geometry.coordinates[0],
+        },
+      };
+      console.log(`User is outside delivery area. Distance: ${response.distance.kilometers} km`);
+    } catch (err) {
+      console.error("Error calculating distance:", err);
+      response.distanceError = "Could not calculate distance";
     }
+  } else {
+    console.log("User is inside delivery area");
+  }
 
-    const point = turf.point([lng, lat]);
-    const polygon = restaurantArea;
-
-    const isInside = turf.booleanPointInPolygon(point, polygon);
-
-    // Prepare response object
-    let response = { 
-        inside: isInside, 
-        lat, 
-        lng 
-    };
-
-    // If outside, calculate distance to polygon
-    if (!isInside) {
-        try {
-            // Get the polygon boundary as a LineString
-            const polygonBoundary = turf.polygonToLine(polygon);
-            
-            // Calculate distance from point to polygon boundary
-            const distance = turf.pointToLineDistance(point, polygonBoundary, { units: 'kilometers' });
-            
-            // Find the nearest point on the polygon boundary
-            const nearestPoint = turf.nearestPointOnLine(polygonBoundary, point);
-            
-            // Add distance information to response
-            response.distance = {
-                kilometers: Math.round(distance * 1000) / 1000, // Round to 3 decimal places
-                meters: Math.round(distance * 1000),
-                nearestPoint: {
-                    lat: nearestPoint.geometry.coordinates[1],
-                    lng: nearestPoint.geometry.coordinates[0]
-                }
-            };
-            
-            console.log(`User is outside delivery area. Distance: ${response.distance.kilometers} km`);
-        } catch (error) {
-            console.error('Error calculating distance:', error);
-            // If distance calculation fails, still return the inside/outside status
-            response.distanceError = 'Could not calculate distance';
-        }
-    } else {
-        console.log('User is inside delivery area');
-    }
-
-    res.json(response);
-});
+  res.json(response);
+};
 
 export { checkLocation };

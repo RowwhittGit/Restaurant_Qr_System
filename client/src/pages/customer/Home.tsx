@@ -6,6 +6,8 @@ import { useOrderStore } from "../../stores/orderStore";
 import { useNavigate, type NavigateFunction } from "react-router-dom";
 import Toast, { useToast } from "../../components/Toast";
 import CustomerNav from "../../components/CustomerNav";
+import { useAutoLocationCheck } from "../../hooks/useAutoLocationCheck";
+import { useLocationStore } from "../../stores/useLocationStore"; // ✅ import store
 
 interface FoodItem {
   id: number
@@ -18,15 +20,20 @@ interface FoodItem {
 const categories = ["All", "Pizza", "Burger", "Laphing", "Platter", "Momo"]
 
 export default function HomePage() {
+
+  // ✅ location check
+  const { inside, checkLocation, error } = useLocationStore();
+  useAutoLocationCheck();
+
   const [foodItems, setFoodItems] = useState<FoodItem[]>([])
   const [activeCategory, setActiveCategory] = useState("All")
   const [searchTerm, setSearchTerm] = useState<string>("")
   const [displayItems, setDisplayItems] = useState<FoodItem[]>([])
-  
+
   // Zustand stores for placing orders
   const { addToOrder } = useOrderStore();
   const { showToast } = useToast(); 
-  
+
   useEffect(() => {
     const fetchFoodItems = async () => {
       try {
@@ -34,7 +41,6 @@ export default function HomePage() {
         setFoodItems(response.data.data)
         setDisplayItems(response.data.data)
         console.log(response.data);
-        
       } catch (error) {
         console.error("Error fetching food items:", error)
         showToast("Failed to load food items", { type: "error" });
@@ -42,7 +48,7 @@ export default function HomePage() {
     }
     fetchFoodItems()
   }, [])
-  
+
   useEffect(() => {
     let filtered: FoodItem[] = []
     if (searchTerm.trim() !== "") {
@@ -60,16 +66,13 @@ export default function HomePage() {
     }
     setDisplayItems(filtered)
   }, [foodItems, searchTerm, activeCategory])
-  
+
   const navigate: NavigateFunction = useNavigate();
 
   // Function to add to the cart and notify
   const addItemToCart = (item: FoodItem) => {
     try {
-      // Add item to order using Zustand store
       addToOrder(item);
-      
-      // Show success toast notification
       showToast(`${item.name} added to cart!`, { 
         type: "success",
         toastOptions: {
@@ -77,11 +80,8 @@ export default function HomePage() {
           autoClose: 2000,
         }
       });
-      
     } catch (error) {
       console.error("Error adding item to cart:", error);
-      
-      // Show error toast notification
       showToast("Failed to add item to cart", { 
         type: "error",
         toastOptions: {
@@ -164,7 +164,7 @@ export default function HomePage() {
                     <h1 className="">Rs. {item.price}</h1>
                     <button 
                       className="text-red-500 ml-8 cursor-pointer hover:text-red-600 transition-colors" 
-                      onClick={() => addItemToCart(item)} // Pass the item as parameter
+                      onClick={() => addItemToCart(item)}
                     >
                       <IoAddCircleSharp className="text-red-500 text-5xl" />
                     </button>
@@ -180,9 +180,10 @@ export default function HomePage() {
 
       {/* Bottom Navigation */}
       <CustomerNav />
-      {/* Debug indicator */}
-      <div className="fixed bottom-4 right-4 bg-black/20 text-white text-xs px-2 py-1 rounded pointer-events-none">
-        72 x 72
+
+      {/* Debug indicator for location */}
+      <div className="fixed bottom-4 right-4 bg-black/60 text-white text-xs px-2 py-1 rounded">
+        {error ? `⚠️ ${error}` : inside === null ? "📍 Checking..." : inside ? "✅ Inside" : "❌ Outside"}
       </div>
     </div>
   )

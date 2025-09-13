@@ -4,3 +4,6 @@ prisma
 cookie-parser
 dotenv
 @turf/turf
+
+@capacitor/core
+@capacitor/geolocation
