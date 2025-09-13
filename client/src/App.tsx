@@ -14,6 +14,7 @@ import LocationCheck from './pages/admin/LocationCheck'
 import Chart2 from './pages/admin/Chart2'
 import Chart3 from './pages/admin/Chart3'
 import Login from './pages/Login'
+import GeoCheck from './pages/customer/GeoCheck'
 
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
         <Route path='/admin/chart' element={<Chart />} />
         <Route path='/admin/chart/2' element={<Chart2 />} />
         <Route path='/admin/chart/3' element={<Chart3 />} />
+        <Route path='/location' element={<GeoCheck />} />
       </Routes>
     </div>
   )

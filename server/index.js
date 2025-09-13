@@ -10,6 +10,7 @@ import menuRoutes from './routes/menuRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import adminRoutes from "./routes/adminRoutes.js";
 import authRoutes from "./routes/authRoutes.js"
+import locationRoutes from './routes/locationRoutes.js'; // <--- new
 import prisma from './config/db.js';
 
 dotenv.config();
@@ -41,6 +42,7 @@ app.use('/api/orders', orderRoutes);
 // Admin routes
 app.use("/api/admin", adminRoutes)
 app.use("/api/auth", authRoutes)
+app.use("/api/location", locationRoutes) // <--- new
 
 /*
 PUBLIC ROUTES (No auth needed - customers):
