@@ -6,6 +6,7 @@ import { useOrderStore } from "../../stores/orderStore";
 import { useNavigate, type NavigateFunction } from "react-router-dom";
 import Toast, { useToast } from "../../components/Toast";
 import CustomerNav from "../../components/CustomerNav";
+import { useTableId } from "../../hooks/useTableId";
 
 interface FoodItem {
   id: number;
@@ -18,6 +19,12 @@ interface FoodItem {
 const categories = ["All", "Pizza", "Burger", "Laphing", "Platter", "Momo"];
 
 export default function HomePage() {
+
+    const tableId = useTableId();
+
+  // ⚠️ If tableId is actually a <Navigate /> element, just return it
+  if (typeof tableId !== "string") return tableId;
+
   // ✅ location check (auto via hook)
 
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);

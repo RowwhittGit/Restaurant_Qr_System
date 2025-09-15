@@ -1,140 +1,147 @@
-import { IoAddCircleSharp, IoRemoveCircleSharp, IoTrashOutline } from "react-icons/io5"
-import { IoArrowBackOutline, IoChevronDownOutline, IoChevronUpOutline } from "react-icons/io5"
-import { useOrderStore } from "../../stores/orderStore"
-import { useNavigate, type NavigateFunction } from "react-router-dom"
-import Toast, { useToast } from "../../components/Toast"
-import io from "socket.io-client"
-import { useEffect, useState } from "react"
-import axios from "axios"
+import {
+  IoAddCircleSharp,
+  IoRemoveCircleSharp,
+  IoTrashOutline,
+  IoArrowBackOutline,
+  IoChevronDownOutline,
+  IoChevronUpOutline,
+} from "react-icons/io5";
+import { useOrderStore } from "../../stores/orderStore";
+import { useNavigate, type NavigateFunction } from "react-router-dom";
+import Toast, { useToast } from "../../components/Toast";
+import io from "socket.io-client";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { useTableId } from "../../hooks/useTableId";
 
 interface FoodItem {
-  id: number
-  image: string
-  name: string
-  category: string[]
-  price: number
-  quantity: number
+  id: number;
+  image: string;
+  name: string;
+  category: string[];
+  price: number;
+  quantity: number;
 }
 
 interface ActiveOrderItem {
-  name: string
-  quantity: number
-  price: number
+  name: string;
+  quantity: number;
+  price: number;
   menu: {
-    price: number
-  }
+    price: number;
+  };
 }
 
 interface ActiveOrder {
-  id: number
-  tableId: number
-  items: ActiveOrderItem[]
-  status: string
-  totalPrice: number
-  createdAt: string
+  id: number;
+  tableId: number;
+  items: ActiveOrderItem[];
+  status: string;
+  totalPrice: number;
+  createdAt: string;
 }
 
-// ✅ connect socket outside component so it persists
-const socket = io("http://localhost:3000") // replace with your backend URL
+// Connect socket outside component so it persists
+const socket = io("http://localhost:3000"); // replace with your backend URL
 
 export default function CustomerOrder() {
-  const { orders, increaseQuantity, decreaseQuantity, removeFromOrder, clearOrders } = useOrderStore()
-  const { showToast } = useToast()
+  // get table id from query param
+  const tableId = useTableId();
+  const { orders, increaseQuantity, decreaseQuantity, removeFromOrder, clearOrders } = useOrderStore();
+  const { showToast } = useToast();
 
-  const [activeOrders, setActiveOrders] = useState<ActiveOrder[]>([])
-  const [showActiveOrders, setShowActiveOrders] = useState(false)
-  const [loadingActiveOrders, setLoadingActiveOrders] = useState(false)
+  const [activeOrders, setActiveOrders] = useState<ActiveOrder[]>([]);
+  const [showActiveOrders, setShowActiveOrders] = useState(false);
+  const [loadingActiveOrders, setLoadingActiveOrders] = useState(false);
 
-  const navigate: NavigateFunction = useNavigate()
+  const navigate: NavigateFunction = useNavigate();
+  const totalPrice = orders.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  const totalPrice = orders.reduce((sum, item) => sum + item.price * item.quantity, 0)
-
+  // Fetch active orders for this table
   const fetchActiveOrders = async () => {
+    if (!tableId) return;
     try {
-      setLoadingActiveOrders(true)
-      const tableId = 1 // replace with real tableId from QR
-      const response = await axios.get(`http://localhost:3000/api/orders/table/${tableId}`)
-      setActiveOrders(response.data)
+      setLoadingActiveOrders(true);
+      const response = await axios.get(`http://localhost:3000/api/orders/table/${tableId}`);
+      setActiveOrders(response.data);
     } catch (error) {
-      console.error("Error fetching active orders:", error)
+      console.error("Error fetching active orders:", error);
       showToast("Failed to load active orders", {
         type: "error",
         toastOptions: { position: "top-right", autoClose: 2000 },
-      })
+      });
     } finally {
-      setLoadingActiveOrders(false)
+      setLoadingActiveOrders(false);
     }
-  }
+  };
 
   const getStatusDisplay = (status: string) => {
     switch (status.toLowerCase()) {
       case "pending":
-        return { emoji: "⏳", color: "text-yellow-600", bg: "bg-yellow-50" }
+        return { emoji: "⏳", color: "text-yellow-600", bg: "bg-yellow-50" };
       case "preparing":
-        return { emoji: "👨‍🍳", color: "text-blue-600", bg: "bg-blue-50" }
+        return { emoji: "👨‍🍳", color: "text-blue-600", bg: "bg-blue-50" };
       case "ready":
-        return { emoji: "✅", color: "text-green-600", bg: "bg-green-50" }
+        return { emoji: "✅", color: "text-green-600", bg: "bg-green-50" };
       case "delivered":
-        return { emoji: "🍽️", color: "text-gray-600", bg: "bg-gray-50" }
+        return { emoji: "🍽️", color: "text-gray-600", bg: "bg-gray-50" };
       default:
-        return { emoji: "⏳", color: "text-yellow-600", bg: "bg-yellow-50" }
+        return { emoji: "⏳", color: "text-yellow-600", bg: "bg-yellow-50" };
     }
-  }
+  };
 
-  // ✅ Join as customer when page loads
+  // Join as customer when page loads
   useEffect(() => {
-    const tableId = 1 // replace with real tableId from QR
-    socket.emit("join_room", { userType: "customer", tableId })
+    if (!tableId) return;
+    socket.emit("join_room", { userType: "customer", tableId });
+    fetchActiveOrders();
 
-    fetchActiveOrders()
-
-    // Listen for order confirmation
     socket.on("orderPlaced", (order) => {
       showToast(`✅ Order #${order.id} placed successfully!`, {
         type: "success",
         toastOptions: { position: "top-right", autoClose: 2000 },
-      })
-      console.log("Order confirmed from server:", order)
+      });
+      clearOrders();
+      fetchActiveOrders();
+    });
 
-      // Clear local cart after confirmation
-      clearOrders()
-      fetchActiveOrders()
-    })
-
-    // when order status updates
     socket.on("orderStatusUpdate", (updatedOrder: ActiveOrder) => {
       setActiveOrders((prevOrders) =>
         prevOrders.map((order) =>
           order.id === updatedOrder.id ? { ...order, status: updatedOrder.status } : order
         )
-      )
-    })
+      );
+    });
 
     return () => {
-      socket.off("orderPlaced")
-      socket.off("orderStatusUpdate")
-    }
-  }, [clearOrders])
+      socket.off("orderPlaced");
+      socket.off("orderStatusUpdate");
+    };
+  }, [clearOrders, tableId]);
 
-  // 🔼 Quantity handlers
-  const increase = (item: FoodItem) => increaseQuantity(item.id)
-  const decrease = (item: FoodItem) => decreaseQuantity(item.id)
-  const removeItem = (item: FoodItem) => removeFromOrder(item.id)
+  // Quantity handlers
+  const increase = (item: FoodItem) => increaseQuantity(item.id);
+  const decrease = (item: FoodItem) => decreaseQuantity(item.id);
+  const removeItem = (item: FoodItem) => removeFromOrder(item.id);
 
-  // ✅ Place Order → send to backend
+  // Place Order → send to backend
   const handlePlaceOrder = async () => {
-    try {
-      if (orders.length === 0) {
-        showToast("Your cart is empty!", {
-          type: "warning",
-          toastOptions: { position: "top-right", autoClose: 2000 },
-        })
-        return
-      }
+    if (!tableId) {
+      console.error("Cannot place order: tableId is missing!");
+      return;
+    }
 
-      // Build correct payload for backend
+    if (orders.length === 0) {
+      showToast("Your cart is empty!", {
+        type: "warning",
+        toastOptions: { position: "top-right", autoClose: 2000 },
+      });
+      return;
+    }
+
+    try {
       const payload = {
-        tableId: 1, // later you can make this dynamic
+        tableId,
         items: orders.map((item) => ({
           name: item.name,
           price: item.price,
@@ -142,23 +149,26 @@ export default function CustomerOrder() {
           menuId: item.id,
         })),
         totalItems: orders.reduce((sum, item) => sum + item.quantity, 0),
-        totalPrice: orders.reduce((sum, item) => sum + item.price * item.quantity, 0),
-      }
+        totalPrice: totalPrice,
+      };
 
-      // Send to backend
-      await axios.post("http://localhost:3000/api/orders/", payload)
+      await axios.post("http://localhost:3000/api/orders/", payload);
 
       showToast(`Order placed successfully! Total: Rs. ${payload.totalPrice}/-`, {
         type: "success",
         toastOptions: { position: "top-right", autoClose: 3000 },
-      })
+      });
     } catch (error) {
-      console.error("Error placing order:", error)
+      console.error("Error placing order:", error);
       showToast("Failed to place order", {
         type: "error",
         toastOptions: { position: "top-right", autoClose: 3000 },
-      })
+      });
     }
+  };
+
+  if (!tableId) {
+    return <div className="text-center py-12 text-red-500">Error: Table ID missing or invalid in URL</div>;
   }
 
   return (
@@ -169,18 +179,19 @@ export default function CustomerOrder() {
       <div className="bg-white px-4 py-6 shadow-sm flex gap-5 items-center">
         <button
           className="bg-red-500 rounded-full w-10 flex justify-center hover:bg-red-600 transition-colors"
-          onClick={() => navigate("/")}
+          onClick={() => navigate(`/?tableId=${tableId}`)}
         >
           <IoArrowBackOutline className="h-10 w-8 text-white" />
         </button>
         <h1 className="text-2xl font-bold text-gray-900">Order Items</h1>
       </div>
 
+      {/* Active Orders & Orders List */}
       <div className="mx-4 mt-4 mb-2">
         <button
           onClick={() => {
-            setShowActiveOrders(!showActiveOrders)
-            if (!showActiveOrders) fetchActiveOrders()
+            setShowActiveOrders(!showActiveOrders);
+            if (!showActiveOrders) fetchActiveOrders();
           }}
           className="w-full bg-white rounded-xl shadow-sm p-4 flex items-center justify-between hover:shadow-md transition-shadow"
         >
@@ -209,7 +220,7 @@ export default function CustomerOrder() {
             ) : activeOrders.length > 0 ? (
               <div className="divide-y divide-gray-100">
                 {activeOrders.map((order) => {
-                  const statusDisplay = getStatusDisplay(order.status)
+                  const statusDisplay = getStatusDisplay(order.status);
                   return (
                     <div key={order.id} className="p-4">
                       <div className="flex items-center justify-between mb-3">
@@ -238,7 +249,7 @@ export default function CustomerOrder() {
                         <span className="font-bold text-green-600">Total: Rs. {order.totalPrice}/-</span>
                       </div>
                     </div>
-                  )
+                  );
                 })}
               </div>
             ) : (
@@ -264,7 +275,6 @@ export default function CustomerOrder() {
                 <h3 className="font-semibold text-gray-900 text-sm line-clamp-1">{item.name}</h3>
                 <p className="text-green-600 font-bold">Rs. {item.price}/-</p>
 
-                {/* Quantity Controls */}
                 <div className="flex items-center mt-2 gap-2">
                   <button onClick={() => increase(item)} className="hover:scale-110 transition-transform">
                     <IoAddCircleSharp className="text-green-500 text-2xl" />
@@ -288,7 +298,7 @@ export default function CustomerOrder() {
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg">No items in your order</p>
             <button
-              onClick={() => navigate("/")}
+              onClick={() => navigate(`/?tableId=${tableId}`)}
               className="mt-4 bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-colors"
             >
               Start Ordering
@@ -317,5 +327,5 @@ export default function CustomerOrder() {
         </div>
       )}
     </div>
-  )
+  );
 }

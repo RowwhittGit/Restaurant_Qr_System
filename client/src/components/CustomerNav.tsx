@@ -1,10 +1,12 @@
 import React from "react";
 import { Home } from "lucide-react";
 import { MdOutlineRestaurantMenu } from "react-icons/md";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const CustomerNav: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const tableId = searchParams.get("tableId"); // get current tableId
 
   return (
     <div>
@@ -12,14 +14,14 @@ const CustomerNav: React.FC = () => {
         <div className="flex items-center justify-around">
           <button
             className="text-white hover:bg-red-600 p-3 rounded-lg flex items-center gap-3 transition-colors"
-            onClick={() => navigate("/")}
+            onClick={() => navigate(`/?tableId=${tableId || ""}`)}
           >
             <Home className="h-7 w-7" />
             <span className="text-sm font-medium">Home</span>
           </button>
           <button
             className="text-white hover:bg-red-600 p-3 rounded-lg flex items-center gap-3 transition-colors"
-            onClick={() => navigate("/orders")}
+            onClick={() => navigate(`/orders?tableId=${tableId || ""}`)}
           >
             <MdOutlineRestaurantMenu className="h-7 w-7" />
             <span className="text-sm font-medium">Orders</span>
